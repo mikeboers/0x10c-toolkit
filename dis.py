@@ -22,7 +22,7 @@ BASIC_OPCODES = '''
 '''.strip().split()
 
 NONBASIC_OPCODES = '''
-    XXX
+    RSV
     JSR
 '''.strip().split()
 
@@ -109,9 +109,9 @@ while words:
 
     words_used = start_word_count - len(words)
     if basic:
-        out = '%04x: %s %s, %s' % (addr, BASIC_OPCODES[opcode], a, b)
+        out = '%s %s, %s' % (BASIC_OPCODES[opcode], a, b)
     else:
-        out = '%04x: %s %s' % (addr, NONBASIC_OPCODES[opcode], a)
+        out = '%s %s' % (NONBASIC_OPCODES[opcode], a)
     dump = ' '.join('%04x' % x[1] for x in words_copy[addr:addr + words_used])
-    print '%-40s; %s' % (out, dump)
+    print '%-30s; %04x: %s' % (out, addr, dump)
     
