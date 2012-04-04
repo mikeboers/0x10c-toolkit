@@ -40,7 +40,7 @@ class BaseValue(object):
         self.value = value
     
     def eval(self, cpu):
-        raise NotImplementedError()
+        raise RuntimeError('cannot eval %r' % self)
 
     def save(self, cpu, value):
         raise TypeError('cannot save to %r' % self)
@@ -59,13 +59,21 @@ class RegisterValue(BaseValue):
     def eval(self, cpu):
         if isinstance(self.index, basestring):
             return getattr(cpu, self.index)
-        return cpu.registers[self.index]
+        if self.indirect or self.offset:
+            loc = cpu.registers[self.index] + (self.offset or 0)
+            return cpu.memory[loc]
+        else:
+            return cpu.registers[self.index]
     
     def save(self, cpu, value):
         if isinstance(self.index, basestring):
             setattr(cpu, self.index, value.eval(cpu))
         else:
-            cpu.registers[self.index] = value.eval(cpu)
+            if self.indirect or self.offset:
+                loc = cpu.registers[self.index] + (self.offset or 0)
+                cpu.memory[loc] = value.eval(cpu)
+            else:
+                cpu.registers[self.index] = value.eval(cpu)
     
     def __repr__(self):
         if isinstance(self.index, basestring):
@@ -101,6 +109,16 @@ class StackValue(BaseValue):
         if self.value > 0:
             return 'POP'
         return 'PEEK'
+    def eval(self, cpu):
+        if self.value < 0:
+            cpu.SP -= 1
+            return cpu.memory[cpu.SP]
+        if self.value > 0:
+            val = cpu.memory[cpu.SP]
+            cpu.SP += 1
+            return val
+        else:
+            return cpu.memory[cpu.SP]
         
 class DCPU16(object):
     
@@ -181,9 +199,12 @@ class DCPU16(object):
             last_PC = self.PC
             
             if counter % 16 == 0:
-                print ' '.join('%4s' % x for x in 'PC SP O A B C X Y Z I J'.split())
-                print '-----' * 11
+                if counter:
+                    print
+                print ' '.join('%4s' % x for x in '# PC SP O A B C X Y Z I J'.split())
+                print '-----' * 12
             counter += 1
+            print '%4x' % (counter,),
             print ' '.join('%4x' % getattr(self, x) for x in 'PC SP O'.split()),
             print ' '.join('%4x' % self.registers[x] for x in xrange(8))
             self._run_one()
@@ -212,8 +233,34 @@ class DCPU16(object):
         if aval != bval:
             pass
         else:
-            self.PC += 1        
+            self.PC += 1
     
+    def do_AND(self, a, b):
+        a.save(self, LiteralValue(a.eval(self) & b.eval(self)))
+    def do_BOR(self, a, b):
+        a.save(self, LiteralValue(a.eval(self) | b.eval(self)))
+    def do_XOR(self, a, b):
+        a.save(self, LiteralValue(a.eval(self) ^ b.eval(self)))
+
+    def do_JSR(self, a, b):
+        aval = a.eval(self)
+        self.SP -= 1
+        self.memory[self.SP] = self.PC
+        self.PC = aval
+    
+    def do_SHL(self, a, b):
+        aval = a.eval(self)
+        bval = b.eval(self)
+        self.O = ((aval << bval) >> 16 ) & 0xffff
+        a.save(self, LiteralValue((aval << bval) & 0xffff))
+    
+    def do_SHR(self, a, b):
+        aval = a.eval(self)
+        bval = b.eval(self)
+        self.O = ((aval << 16) >> bval) & 0xffff
+        a.save(self, LiteralValue(aval >> bval))
+
+        
     def get_next_word(self):
         word = self.memory[self.PC]
         self.PC += 1
