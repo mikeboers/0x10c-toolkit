@@ -128,6 +128,7 @@ class DCPU16(object):
         self.SP = 0xffff
         self.O = 0
         self.memory = [0] * 0x10000
+        self.skip = False
     
     def loads_hex(self, encoded, location=0):
         encoded = re.sub(r';.*$', '', encoded, 0, re.M) # strip comments
@@ -138,15 +139,17 @@ class DCPU16(object):
             self.memory[location + i] = int(encoded[4 * i:4 * i + 4], 16)
     
     def dump(self):
-        max_i = max(i if self.memory[i] else 0 for i in xrange(0x10000))
-        for i in xrange(0, max_i, 8):
-            print '; %04x:' % (i,),
-            for j in xrange(8):
-                offset = i + j
-                if offset >= 0x10000:
+        for i in xrange(0, 0x10000, 8):
+            data = False
+            for j in xrange(i, i + 8):
+                if self.memory[j]:
+                    data = True
                     break
-                print '%04x' % (self.memory[offset],),
-            print
+            if data:
+                print '; %04x:' % (i,),
+                for j in xrange(i, i + 8):
+                    print '%04x' % (self.memory[j],),
+                print
                 
     def disassemble(self, location=None):
         old_PC = self.PC
@@ -201,16 +204,19 @@ class DCPU16(object):
             if counter % 16 == 0:
                 if counter:
                     print
-                print ' '.join('%4s' % x for x in '# PC SP O A B C X Y Z I J'.split())
-                print '-----' * 12
+                print ';', ' '.join('%4s' % x for x in '# PC SP O A B C X Y Z I J'.split())
+                print ';', '-----' * 12
             counter += 1
-            print '%4x' % (counter,),
+            print '; %4x' % (counter - 1,),
             print ' '.join('%4x' % getattr(self, x) for x in 'PC SP O'.split()),
             print ' '.join('%4x' % self.registers[x] for x in xrange(8))
             self._run_one()
     
     def _run_one(self):
         basic, opcode, a, b = self.get_next_instruction()
+        if self.skip:
+            self.skip = False
+            return
         opcode_name = BASIC_OPCODES[opcode] if basic else NONBASIC_OPCODES[opcode]
         try:
             handler = getattr(self, 'do_%s' % opcode_name)
@@ -230,10 +236,7 @@ class DCPU16(object):
     def do_IFN(self, a, b):
         aval = a.eval(self)
         bval = b.eval(self)
-        if aval != bval:
-            pass
-        else:
-            self.PC += 1
+        self.skip = aval == bval
     
     def do_AND(self, a, b):
         a.save(self, LiteralValue(a.eval(self) & b.eval(self)))
@@ -325,4 +328,6 @@ if __name__ == '__main__':
     print
     
     cpu.run()
+    print 
     
+    cpu.dump()
