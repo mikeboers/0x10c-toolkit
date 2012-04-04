@@ -111,11 +111,11 @@ class StackValue(BaseValue):
         return 'PEEK'
     def eval(self, cpu):
         if self.value < 0:
-            cpu.SP -= 1
+            cpu.SP = (cpu.SP - 1) % 0x10000
             return cpu.memory[cpu.SP]
         if self.value > 0:
             val = cpu.memory[cpu.SP]
-            cpu.SP += 1
+            cpu.SP = (cpu.SP + 1) % 0x10000
             return val
         else:
             return cpu.memory[cpu.SP]
@@ -125,7 +125,7 @@ class DCPU16(object):
     def __init__(self):
         self.registers = [0] * 8
         self.PC = 0
-        self.SP = 0xffff
+        self.SP = 0
         self.O = 0
         self.memory = [0] * 0x10000
         self.skip = False
@@ -247,7 +247,7 @@ class DCPU16(object):
 
     def do_JSR(self, a, b):
         aval = a.eval(self)
-        self.SP -= 1
+        self.SP = (self.SP - 1) % 0x10000
         self.memory[self.SP] = self.PC
         self.PC = aval
     
