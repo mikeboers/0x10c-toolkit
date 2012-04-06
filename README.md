@@ -4,6 +4,8 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 ## TODO
 
+- pull in examples from https://github.com/jtauber/DCPU-16-Examples
+
 - disassembler (done, in `dis.py`)
 	- rewrite in Cython or C++
 	

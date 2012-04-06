@@ -1,5 +1,6 @@
 import sys
 import re
+import time
 
 
 BASIC_OPCODES = '''
@@ -195,22 +196,25 @@ class DCPU16(object):
         
         return basic, opcode, a, b
     
-    def run(self):
+    def run(self, debug=False):
         counter = 0
         last_PC = -1
         while self.memory[self.PC] and last_PC != self.PC:
             last_PC = self.PC
             
-            if counter % 16 == 0:
-                if counter:
-                    print
-                print ';', ' '.join('%4s' % x for x in '# PC SP O A B C X Y Z I J'.split())
-                print ';', '-----' * 12
+            if debug:
+                if counter % 16 == 0:
+                    if counter:
+                        print
+                    print ';', ' '.join('%4s' % x for x in '# PC SP O A B C X Y Z I J'.split())
+                    print ';', '-----' * 12
             counter += 1
-            print '; %4x' % (counter - 1,),
-            print ' '.join('%4x' % getattr(self, x) for x in 'PC SP O'.split()),
-            print ' '.join('%4x' % self.registers[x] for x in xrange(8))
+            if debug:
+                print '; %4x' % (counter - 1,),
+                print ' '.join('%4x' % getattr(self, x) for x in 'PC SP O'.split()),
+                print ' '.join('%4x' % self.registers[x] for x in xrange(8))
             self._run_one()
+        return counter
     
     def _run_one(self):
         basic, opcode, a, b = self.get_next_instruction()
@@ -240,8 +244,10 @@ class DCPU16(object):
     
     def do_AND(self, a, b):
         a.save(self, LiteralValue(a.eval(self) & b.eval(self)))
+    
     def do_BOR(self, a, b):
         a.save(self, LiteralValue(a.eval(self) | b.eval(self)))
+    
     def do_XOR(self, a, b):
         a.save(self, LiteralValue(a.eval(self) ^ b.eval(self)))
 
@@ -262,8 +268,7 @@ class DCPU16(object):
         bval = b.eval(self)
         self.O = ((aval << 16) >> bval) & 0xffff
         a.save(self, LiteralValue(aval >> bval))
-
-        
+    
     def get_next_word(self):
         word = self.memory[self.PC]
         self.PC += 1
@@ -327,7 +332,9 @@ if __name__ == '__main__':
     cpu.disassemble()
     print
     
-    cpu.run()
+    start = time.time()
+    steps = cpu.run()
+    print steps / (time.time() - start)
     print 
     
     cpu.dump()
