@@ -31,8 +31,6 @@ REGISTER_NAMES = 'ABCXYZIJ'
 
 
 
-class Operation(object):
-    pass
 
 
 cdef class BaseValue(object):
@@ -131,6 +129,91 @@ cdef class StackValue(BaseValue):
             return cpu.memory[cpu.SP]
 
 
+cdef class BasicOperation(object):
+
+    cdef BaseValue a
+    cdef BaseValue b
+    
+    def __init__(self, BaseValue a, BaseValue b):
+        self.a = a
+        self.b = b
+    
+    cdef run(self, DCPU16 cpu):
+        raise NotImplementedError(self.__class__.__name__)
+    
+    def __repr__(self):
+        return '%s %r, %r' % (self.__class__.__name__[-3:], self.a, self.b)
+
+
+cdef class NonBasicOperation(BasicOperation):
+
+    def __init__(self, BaseValue a):
+        self.a = a
+        
+    def __repr__(self):
+        return '%s %r' % (self.__class__.__name__[-3:], self.a)
+
+
+cdef class OpSET(BasicOperation):
+    cdef run(self, DCPU16 cpu):
+        self.a.save(cpu, self.b)
+
+cdef class OpADD(BasicOperation):
+    pass
+
+cdef class OpSUB(BasicOperation):
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.O = 0xffff if bval > aval else 0
+        self.a.save(cpu, LiteralValue((aval - bval) & 0xffff))
+    
+cdef class OpMUL(BasicOperation):
+    pass
+cdef class OpDIV(BasicOperation):
+    pass
+cdef class OpMOD(BasicOperation):
+    pass
+cdef class OpSHL(BasicOperation):
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.O = ((aval << bval) >> 16 ) & 0xffff
+        self.a.save(cpu, LiteralValue((aval << bval) & 0xffff))
+    
+cdef class OpSHR(BasicOperation):
+    pass
+cdef class OpAND(BasicOperation):
+    pass
+cdef class OpBOR(BasicOperation):
+    pass
+cdef class OpXOR(BasicOperation):
+    pass
+cdef class OpIFE(BasicOperation):
+    pass
+cdef class OpIFN(BasicOperation):
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.skip = aval == bval
+    
+cdef class OpIFG(BasicOperation):
+    pass
+cdef class OpIFB(BasicOperation):
+    pass
+
+cdef class OpJSR(NonBasicOperation):
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cpu.SP = (cpu.SP - 1) % 0x10000
+        cpu.memory[cpu.SP] = cpu.PC
+        cpu.PC = aval
+    
+
+
+
+
+
 cdef class DCPU16(object):
     
     def __init__(self):
@@ -218,34 +301,71 @@ cdef class DCPU16(object):
     def _disassemble_one(self):
         
         start_PC = self.PC
-        basic, opcode, a, b = self.get_next_instruction()        
+        cdef BasicOperation op = self.get_next_instruction()        
         end_PC = self.PC
         
-        if basic:
-            out = '%s %s, %s' % (BASIC_OPCODES[opcode], a, b)
-        else:
-            out = '%s %s' % (NONBASIC_OPCODES[opcode], a)
+        # if basic:
+        #     out = '%s %s, %s' % (BASIC_OPCODES[opcode], a, b)
+        # else:
+        #     out = '%s %s' % (NONBASIC_OPCODES[opcode], a)
         dump = ' '.join('%04x' % x for x in self.memory[start_PC:end_PC])
-        print '%-30s; %04x: %s' % (out, start_PC, dump)
+        print '%-30r; %04x: %s' % (op, start_PC, dump)
     
     def get_next_instruction(self):
-        word = self.get_next_word()
-        opcode = word & 0xf
-        a = (word >> 4) & 0x3f
-        b = (word >> 10) & 0x3f        
-        if opcode:
-            basic = True
-            a = self.get_op_value(a)
-            b = self.get_op_value(b)
-        else:
-            basic = False
-            opcode, a, b = a, b, None
-            a = self.get_op_value(a)
         
-        return basic, opcode, a, b
-    
+        cdef unsigned short word = self.get_next_word()
+        cdef unsigned short opcode = word & 0xf
+        cdef unsigned short raw_a = (word >> 4) & 0x3f
+        cdef unsigned short raw_b = (word >> 10) & 0x3f    
+        
+        cdef BaseValue a, b
+        if opcode:
+            
+            a = self.get_op_value(raw_a)
+            b = self.get_op_value(raw_b)
+            
+            if opcode == 1:
+                return OpSET(a, b)
+            elif opcode == 2:
+                return OpADD(a, b)
+            elif opcode == 3:
+                return OpSUB(a, b)
+            elif opcode == 4:
+                return OpMUL(a, b)
+            elif opcode == 5:
+                return OpDIV(a, b)
+            elif opcode == 6:
+                return OpMOD(a, b)
+            elif opcode == 7:
+                return OpSHL(a, b)
+            elif opcode == 8:
+                return OpSHR(a, b)
+            elif opcode == 9:
+                return OpAND(a, b)
+            elif opcode == 0xa:
+                return OpBOR(a, b)
+            elif opcode == 0xb:
+                return OpXOR(a, b)
+            elif opcode == 0xc:
+                return OpIFE(a, b)
+            elif opcode == 0xd:
+                return OpIFN(a, b)
+            elif opcode == 0xe:
+                return OpIFG(a, b)
+            elif opcode == 0xf:
+                return OpIFB(a, b)
+            
+        else:
+            a = self.get_op_value(raw_b)
+            if raw_a == 1:
+                return OpJSR(a)
+
+        raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_a, raw_b))
+            
+            
+        
     cpdef run(self):
-        debug=True
+        debug=False
         counter = 0
         last_PC = -1
         while self.memory[self.PC] and last_PC != self.PC:
@@ -265,30 +385,14 @@ cdef class DCPU16(object):
         return counter
     
     def _run_one(self):
-        basic, opcode, a, b = self.get_next_instruction()
+        cdef BasicOperation op = self.get_next_instruction()
         if self.skip:
             self.skip = False
             return
-        opcode_name = BASIC_OPCODES[opcode] if basic else NONBASIC_OPCODES[opcode]
-        try:
-            handler = getattr(self, 'do_%s' % opcode_name)
-        except AttributeError:
-            raise RuntimeError('no handler for %s' % opcode_name)
-        handler(a, b)
+        op.run(self)
+        
     
-    def do_SET(self, a, b):
-        a.save(self, b)
     
-    def do_SUB(self, a, b):
-        aval = a.eval(self)
-        bval = b.eval(self)
-        self.O = 0xffff if bval > aval else 0
-        a.save(self, LiteralValue((aval - bval) & 0xffff))
-    
-    def do_IFN(self, a, b):
-        aval = a.eval(self)
-        bval = b.eval(self)
-        self.skip = aval == bval
     
     def do_AND(self, a, b):
         a.save(self, LiteralValue(a.eval(self) & b.eval(self)))
@@ -299,18 +403,7 @@ cdef class DCPU16(object):
     def do_XOR(self, a, b):
         a.save(self, LiteralValue(a.eval(self) ^ b.eval(self)))
 
-    def do_JSR(self, a, b):
-        aval = a.eval(self)
-        self.SP = (self.SP - 1) % 0x10000
-        self.memory[self.SP] = self.PC
-        self.PC = aval
-    
-    def do_SHL(self, a, b):
-        aval = a.eval(self)
-        bval = b.eval(self)
-        self.O = ((aval << bval) >> 16 ) & 0xffff
-        a.save(self, LiteralValue((aval << bval) & 0xffff))
-    
+        
     def do_SHR(self, a, b):
         aval = a.eval(self)
         bval = b.eval(self)
