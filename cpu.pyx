@@ -176,8 +176,7 @@ cdef class CPU(object):
             
             
         
-    cpdef run(self):
-        cdef bint debug = False
+    def run(self, bint debug=False):
         cdef unsigned long counter = 0
         cdef int last_PC = -1
         while self.memory[self.PC] and last_PC != self.PC:
@@ -193,10 +192,10 @@ cdef class CPU(object):
                 print '; %4x' % (counter - 1,),
                 print ' '.join(['%4x' % x for x in [self.PC, self.SP, self.O]]),
                 print ' '.join(['%4x' % self.registers[x] for x in xrange(8)])
-            self._run_one()
+            self.run_one()
         return counter
     
-    cpdef _run_one(self):
+    cpdef run_one(self):
         cdef ops.Base op = self.get_next_instruction()
         if self.skip:
             self.skip = False

@@ -73,6 +73,14 @@ def get_value(line):
             indirect=True,
             offset=parse_number(m.group(1)),
         ), line[m.end(0):]
+    m = match(r'\[\s*(' + REGISTER + ')\s*\+\s*(' + NUMBER + ')\s*\]', line)
+    if m:
+        return values.Register(
+            parse_register(m.group(1)),
+            indirect=True,
+            offset=parse_number(m.group(2)),
+        ), line[m.end(0):]
+
     
     # Stack values.
     m = match(r'(POP|PEEK|PUSH)', line)
@@ -83,6 +91,9 @@ def get_value(line):
     m = match(r'(\w{3,})', line)
     if m:
         return values.Label(m.group(1)), line[m.end(0):]
+    m = match(r'\[\s*(\w{3,})\s*\]', line)
+    if m:
+        return values.Label(m.group(1), indirect=True), line[m.end(0):]
     
     return 'unknown', line
 

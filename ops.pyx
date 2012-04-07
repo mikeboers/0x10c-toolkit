@@ -49,7 +49,12 @@ cdef class SET(Basic):
 
 
 cdef class ADD(Basic):
-    pass
+    cdef run(self, CPU cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cdef unsigned int sum = aval + bval
+        cpu.O = 1 if sum > 0xffff else 0
+        self.a.save(cpu, sum & 0xffff)
 
 
 cdef class SUB(Basic):

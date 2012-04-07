@@ -23,8 +23,8 @@ cpu.disassemble()
 print
 
 start = time.time()
-steps = cpu.run()
-print steps / (time.time() - start)
+steps = cpu.run(debug=True)
+print '%d Hz' % (steps / (time.time() - start))
 print 
     
 cpu.dump()

@@ -110,16 +110,28 @@ cdef class Indirect(Base):
 cdef class Label(Base):
 
     cdef public object label
+    cdef public bint indirect
+    cdef public unsigned short offset
     
-    def __init__(self, label):
+    def __init__(self, label, indirect=False, offset=0):
         self.label = label
+        self.indirect = indirect
+        self.offset = 0
         self.value = 0
     
     def __repr__(self):
-        return self.label
+        out = self.label
+        if self.offset:
+            out = '0x%x + %s' % (self.offset, out)
+        if self.indirect:
+            out = '[%s]' % out
+        return out
     
     def to_code(self):
-        return 0x1f, (self.label, )
+        if self.indirect:
+            return 0x1e, (self.label, )
+        else:
+            return 0x1f, (self.label, )
 
 
 cdef class Stack(Base):
