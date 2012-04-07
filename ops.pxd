@@ -1,9 +1,19 @@
-from cpu cimport DCPU16
+from cpu cimport CPU
 from values cimport BaseValue
 
-cdef class BasicOperation(object):
+
+cdef class Base(object):
+    
+        cdef run(self, CPU cpu)
+
+
+cdef class Basic(Base):
 
         cdef BaseValue a
         cdef BaseValue b
-    
-        cdef run(self, DCPU16 cpu)
+
+
+cdef class NonBasic(Base):
+
+        cdef BaseValue a
+

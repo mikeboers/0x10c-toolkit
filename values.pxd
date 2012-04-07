@@ -1,9 +1,9 @@
-from cpu cimport DCPU16
+from cpu cimport CPU
 
 
 cdef class BaseValue(object):
     
     cdef object value
     
-    cpdef eval(self, DCPU16 cpu)
-    cpdef save(self, DCPU16 cpu, BaseValue value)
+    cpdef eval(self, CPU cpu)
+    cpdef save(self, CPU cpu, BaseValue value)

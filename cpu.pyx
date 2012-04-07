@@ -7,6 +7,23 @@ cimport ops
 import ops
 
 
+# Early binding for speed.
+cdef object OpSET = ops.SET
+cdef object OpADD = ops.ADD
+cdef object OpSUB = ops.SUB
+cdef object OpMUL = ops.MUL
+cdef object OpDIV = ops.DIV
+cdef object OpMOD = ops.MOD
+cdef object OpSHL = ops.SHL
+cdef object OpSHR = ops.SHR
+cdef object OpAND = ops.AND
+cdef object OpBOR = ops.BOR
+cdef object OpXOR = ops.XOR
+cdef object OpIFE = ops.IFE
+cdef object OpIFN = ops.IFN
+cdef object OpIFG = ops.IFG
+cdef object OpIFB = ops.IFB
+cdef object OpJSR = ops.JSR
 
 
 
@@ -16,7 +33,7 @@ import ops
 
 
 
-cdef class DCPU16(object):
+cdef class CPU(object):
     
     def __init__(self):
         self.PC = 0
@@ -101,12 +118,12 @@ cdef class DCPU16(object):
     
     def _disassemble_one(self):
         start_PC = self.PC
-        cdef ops.BasicOperation op = self.get_next_instruction()        
+        cdef ops.Base op = self.get_next_instruction()        
         end_PC = self.PC
         dump = ' '.join('%04x' % x for x in self.memory[start_PC:end_PC])
         print '%-30r; %04x: %s' % (op, start_PC, dump)
     
-    cdef ops.BasicOperation get_next_instruction(self):
+    cdef ops.Base get_next_instruction(self):
         
         cdef unsigned short word = self.get_next_word()
         cdef unsigned short opcode = word & 0xf
@@ -120,47 +137,47 @@ cdef class DCPU16(object):
             b = self.get_op_value(raw_b)
             
             if opcode == 1:
-                return ops.OpSET(a, b)
+                return OpSET(a, b)
             elif opcode == 2:
-                return ops.OpADD(a, b)
+                return OpADD(a, b)
             elif opcode == 3:
-                return ops.OpSUB(a, b)
+                return OpSUB(a, b)
             elif opcode == 4:
-                return ops.OpMUL(a, b)
+                return OpMUL(a, b)
             elif opcode == 5:
-                return ops.OpDIV(a, b)
+                return OpDIV(a, b)
             elif opcode == 6:
-                return ops.OpMOD(a, b)
+                return OpMOD(a, b)
             elif opcode == 7:
-                return ops.OpSHL(a, b)
+                return OpSHL(a, b)
             elif opcode == 8:
-                return ops.OpSHR(a, b)
+                return OpSHR(a, b)
             elif opcode == 9:
-                return ops.OpAND(a, b)
+                return OpAND(a, b)
             elif opcode == 0xa:
-                return ops.OpBOR(a, b)
+                return OpBOR(a, b)
             elif opcode == 0xb:
-                return ops.OpXOR(a, b)
+                return OpXOR(a, b)
             elif opcode == 0xc:
-                return ops.OpIFE(a, b)
+                return OpIFE(a, b)
             elif opcode == 0xd:
-                return ops.OpIFN(a, b)
+                return OpIFN(a, b)
             elif opcode == 0xe:
-                return ops.OpIFG(a, b)
+                return OpIFG(a, b)
             elif opcode == 0xf:
-                return ops.OpIFB(a, b)
+                return OpIFB(a, b)
             
         else:
             a = self.get_op_value(raw_b)
             if raw_a == 1:
-                return ops.OpJSR(a)
+                return OpJSR(a)
 
         raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_a, raw_b))
             
             
         
     cpdef run(self):
-        cdef bint debug = True
+        cdef bint debug = False
         cdef unsigned long counter = 0
         cdef int last_PC = -1
         while self.memory[self.PC] and last_PC != self.PC:
@@ -180,7 +197,7 @@ cdef class DCPU16(object):
         return counter
     
     cpdef _run_one(self):
-        cdef ops.BasicOperation op = self.get_next_instruction()
+        cdef ops.Base op = self.get_next_instruction()
         if self.skip:
             self.skip = False
             return

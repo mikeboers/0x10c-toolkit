@@ -1,10 +1,9 @@
 from values cimport BaseValue
-from ops cimport BasicOperation
+cimport ops
 
 
 
-
-cdef class DCPU16(object):
+cdef class CPU(object):
     
     cdef unsigned short registers[8]
     cdef unsigned short PC
@@ -16,6 +15,6 @@ cdef class DCPU16(object):
     cpdef run(self)
     cpdef _run_one(self)
     cdef unsigned short get_next_word(self)
-    cdef BasicOperation get_next_instruction(self)
+    cdef ops.Base get_next_instruction(self)
     cdef BaseValue get_op_value(self, unsigned short value)
     

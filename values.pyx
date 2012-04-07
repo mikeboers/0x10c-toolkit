@@ -1,4 +1,4 @@
-from cpu cimport DCPU16
+from cpu cimport CPU
 
 
 REGISTER_NAMES = 'ABCXYZIJ'
@@ -11,10 +11,10 @@ cdef class BaseValue(object):
     def __init__(self, value):
         self.value = value
     
-    cpdef eval(self, DCPU16 cpu):
+    cpdef eval(self, CPU cpu):
         raise RuntimeError('cannot eval %r' % self)
 
-    cpdef save(self, DCPU16 cpu, BaseValue value):
+    cpdef save(self, CPU cpu, BaseValue value):
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
@@ -32,7 +32,7 @@ cdef class RegisterValue(BaseValue):
         self.indirect = indirect
         self.offset = offset
     
-    cpdef eval(self, DCPU16 cpu):
+    cpdef eval(self, CPU cpu):
         if isinstance(self.index, basestring):
             return getattr(cpu, self.index)
         if self.indirect or self.offset:
@@ -41,7 +41,7 @@ cdef class RegisterValue(BaseValue):
         else:
             return cpu.registers[self.index]
     
-    cpdef save(self, DCPU16 cpu, BaseValue value):
+    cpdef save(self, CPU cpu, BaseValue value):
         if isinstance(self.index, basestring):
             if self.index == 'PC':
                 cpu.PC = value.eval(cpu)
@@ -68,18 +68,18 @@ cdef class RegisterValue(BaseValue):
 
 
 cdef class LiteralValue(BaseValue):
-    cpdef eval(self, DCPU16 cpu):
+    cpdef eval(self, CPU cpu):
         return self.value
     def __repr__(self):
         return '0x%x' % self.value
 
 
 cdef class IndirectValue(BaseValue):
-    cpdef eval(self, DCPU16 cpu):
+    cpdef eval(self, CPU cpu):
         return cpu.memory[self.value]
     def __repr__(self):
         return '[0x%x]' % self.value
-    cpdef save(self, DCPU16 cpu, BaseValue value):
+    cpdef save(self, CPU cpu, BaseValue value):
         cpu.memory[self.value] = value.eval(cpu)
 
 
@@ -90,7 +90,7 @@ cdef class StackValue(BaseValue):
         if self.value > 0:
             return 'POP'
         return 'PEEK'
-    cpdef eval(self, DCPU16 cpu):
+    cpdef eval(self, CPU cpu):
         if self.value < 0:
             cpu.SP = (cpu.SP - 1) % 0x10000
             return cpu.memory[cpu.SP]

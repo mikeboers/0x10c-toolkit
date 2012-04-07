@@ -122,7 +122,7 @@ class StackValue(BaseValue):
             return cpu.memory[cpu.SP]
 
         
-class DCPU16(object):
+class CPU(object):
     
     def __init__(self):
         self.registers = [0] * 8
@@ -324,7 +324,7 @@ if __name__ == '__main__':
     else:
         print 'usage: %s [infile]' % (sys.argv[0])
     
-    cpu = DCPU16()
+    cpu = CPU()
     cpu.loads_hex(infile.read())
     
     cpu.dump()

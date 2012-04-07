@@ -2,7 +2,7 @@ import sys
 import re
 import time
 
-from cpu import DCPU16
+from cpu import CPU
 
 
 if len(sys.argv) == 1:
@@ -13,7 +13,7 @@ else:
     print 'usage: %s [infile]' % (sys.argv[0])
 
 
-cpu = DCPU16()
+cpu = CPU()
 cpu.loads_hex(infile.read())
 
 cpu.dump()
