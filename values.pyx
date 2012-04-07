@@ -72,7 +72,7 @@ cdef class Register(Base):
             return dict(PC=0x1c, SP=0x1b, O=0x1d)[self.index], ()
         
         if self.offset:
-            return 0x10 + self.index, (self.offset)
+            return 0x10 + self.index, (self.offset, )
         if self.indirect:
             return 0x08 + self.index, ()
         return self.index, ()

@@ -37,7 +37,11 @@ def get_value(line):
         if raw.startswith('0b'):
             return int(raw[2:], 2)
         return int(raw)
-        
+    
+    REGISTER = r'(?:[ABCXYZIJ]|PC|SP|O)'
+    def parse_register(raw):
+        return register_to_code.get(raw, raw)
+    
     def match(exp, line):
         return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line)
     
@@ -52,13 +56,28 @@ def get_value(line):
         return values.Indirect(parse_number(m.group(1))), line[m.end(0):]
     
     # Basic registers.
-    m = match(r'(?:([ABCXYZIJ])|(PC|SP|O))', line)
+    m = match(r'(' + REGISTER + ')', line)
     if m:
-        simple, complex = m.group(1, 2)
-        if simple:
-            return values.Register(register_to_code[simple]), line[m.end(0):]
-        else:
-            return values.Register(complex), line[m.end(0):]
+        return values.Register(parse_register(m.group(1))), line[m.end(0):]
+    
+    # Indirect register.
+    m = match(r'\[\s*(' + REGISTER + ')\s*\]', line)
+    if m:
+        return values.Register(parse_register(m.group(1)), indirect=True), line[m.end(0):]
+    
+    # Offset register.
+    m = match(r'\[\s*(' + NUMBER + ')\s*\+\s*(' + REGISTER + ')\s*\]', line)
+    if m:
+        return values.Register(
+            parse_register(m.group(2)),
+            indirect=True,
+            offset=parse_number(m.group(1)),
+        ), line[m.end(0):]
+    
+    # Stack values.
+    m = match(r'(POP|PEEK|PUSH)', line)
+    if m:
+        return values.Stack(dict(POP=1, PEEK=0, PUSH=-1)[m.group(1)]), line[m.end(0):]
     
     # Labels
     m = match(r'(\w{3,})', line)
@@ -66,7 +85,8 @@ def get_value(line):
         return values.Label(m.group(1)), line[m.end(0):]
     
     return 'unknown', line
-        
+
+
 for line in infile:
     
     # Strip comments.
@@ -102,6 +122,33 @@ for line in infile:
     else:
         raise ValueError('no operation %r' % opname)
     
-    print opname, opcls, a, b, repr(line)
+    if line:
+        print 'LINE NOT FULLY CONSUMED:', repr(line)
+    else:
+        op = opcls(a, b)
+        operations.append(op)
+        print op
+
+
+code = []
+labels = {}
+for op in operations:
+    if isinstance(op, Label):
+        labels[str(op)] = len(code)
+    code.extend(op.to_code())
     
+    print op
+    print '\t', op.to_code()
+    print
     
+
+print code
+
+code = [labels.get(x, x) for x in code]
+
+print code
+
+for i, x in enumerate(code):
+    if i and (i % 8 == 0):
+        print
+    print '%04x' % x,

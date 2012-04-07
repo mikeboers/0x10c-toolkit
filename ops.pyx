@@ -28,14 +28,15 @@ cdef class Basic(Base):
 
 cdef class NonBasic(Base):
 
-    def __init__(self, values.Base a):
+    def __init__(self, values.Base a, b=None):
         self.a = a
         
     def __repr__(self):
         return '%s %r' % (self.__class__.__name__, self.a)
     
     def to_code(self):
-        opcode = basic_cls_to_code[self.__class__]
+        print self.__class__.__name__ + '.to_code()', self.a.to_code()
+        opcode = nonbasic_cls_to_code[self.__class__]
         a, a_extra = self.a.to_code()
         return (((opcode & 0x3f) << 4) + ((a & 0x3f) << 10) ,) + a_extra
         
