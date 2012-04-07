@@ -95,7 +95,7 @@ for line in infile:
     m = re.match(r':\w+|\w+:', line)
     if m:
         label = m.group().strip(':')
-        print '%s:' % label
+        # print '%s:' % label
         operations.append(Label(label))
         line = line[m.end(0):].strip()
     
@@ -127,7 +127,6 @@ for line in infile:
     else:
         op = opcls(a, b)
         operations.append(op)
-        print op
 
 
 code = []
@@ -137,18 +136,15 @@ for op in operations:
         labels[str(op)] = len(code)
     code.extend(op.to_code())
     
-    print op
-    print '\t', op.to_code()
-    print
-    
-
-print code
+    # print op
+    # print '\t', ' '.join('%04x' % x if isinstance(x, int) else x for x in op.to_code())
+    # print
 
 code = [labels.get(x, x) for x in code]
 
-print code
-
 for i, x in enumerate(code):
-    if i and (i % 8 == 0):
-        print
+    if i % 8 == 0:
+        if i:
+            print
+        print '%04x:' % i,
     print '%04x' % x,

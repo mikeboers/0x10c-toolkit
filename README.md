@@ -12,6 +12,7 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 - assembler
 	- assemble into object files
 	- these will still be able to contain references to undefined symbols
+	- short labels
 	
 - linker
 	- link assembled object files and resolve all symbols
@@ -28,3 +29,6 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	- save should take `unsigned short` value
 
 - direct/indirect labels
+
+- cycle costs
+

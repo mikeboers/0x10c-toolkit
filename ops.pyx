@@ -23,6 +23,7 @@ cdef class Basic(Base):
         opcode = basic_cls_to_code[self.__class__]
         a, a_extra = self.a.to_code()
         b, b_extra = self.b.to_code()
+        # print self.__class__.__name__ + '.to_code() ->', opcode, a, b
         return (opcode + ((a & 0x3f) << 4) + ((b & 0x3f) << 10) ,) + a_extra + b_extra
 
 
@@ -35,7 +36,6 @@ cdef class NonBasic(Base):
         return '%s %r' % (self.__class__.__name__, self.a)
     
     def to_code(self):
-        print self.__class__.__name__ + '.to_code()', self.a.to_code()
         opcode = nonbasic_cls_to_code[self.__class__]
         a, a_extra = self.a.to_code()
         return (((opcode & 0x3f) << 4) + ((a & 0x3f) << 10) ,) + a_extra

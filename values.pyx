@@ -119,7 +119,7 @@ cdef class Label(Base):
         return self.label
     
     def to_code(self):
-        return 0x1e, (self.label, )
+        return 0x1f, (self.label, )
 
 
 cdef class Stack(Base):
