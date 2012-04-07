@@ -1,9 +1,4 @@
-cdef class BaseValue(object):
-    
-    cdef object value
-    
-    cpdef eval(self, DCPU16 cpu)
-    cpdef save(self, DCPU16 cpu, BaseValue value)
+from values cimport BaseValue
 
 
 cdef class BasicOperation(object):

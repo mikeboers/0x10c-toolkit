@@ -7,5 +7,6 @@ setup(
     cmdclass = {'build_ext': build_ext},
     ext_modules = [
         Extension("cpu", ["cpu.pyx"]),
+        Extension("values", ["values.pyx"]),
     ]
 )

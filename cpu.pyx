@@ -1,5 +1,7 @@
 import re
 
+cimport values
+import values
 
 BASIC_OPCODES = '''
     XXX
@@ -33,105 +35,9 @@ REGISTER_NAMES = 'ABCXYZIJ'
 
 
 
-cdef class BaseValue(object):
-        
-    def __init__(self, value):
-        self.value = value
-    
-    cpdef eval(self, DCPU16 cpu):
-        raise RuntimeError('cannot eval %r' % self)
-
-    cpdef save(self, DCPU16 cpu, BaseValue value):
-        raise TypeError('cannot save to %r' % self)
-    
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.value)
-
-
-cdef class RegisterValue(BaseValue):
-    
-    cdef object index
-    cdef object indirect
-    cdef object offset
-    
-    def __init__(self, index, indirect=False, offset=None):
-        self.index = index
-        self.indirect = indirect
-        self.offset = offset
-    
-    cpdef eval(self, DCPU16 cpu):
-        if isinstance(self.index, basestring):
-            return getattr(cpu, self.index)
-        if self.indirect or self.offset:
-            loc = cpu.registers[self.index] + (self.offset or 0)
-            return cpu.memory[loc]
-        else:
-            return cpu.registers[self.index]
-    
-    cpdef save(self, DCPU16 cpu, BaseValue value):
-        if isinstance(self.index, basestring):
-            if self.index == 'PC':
-                cpu.PC = value.eval(cpu)
-            elif self.index == 'SP':
-                cpu.SP == value.eval(cpu)
-            else:
-                cpu.O == value.evap(cpu)
-        else:
-            if self.indirect or self.offset:
-                loc = cpu.registers[self.index] + (self.offset or 0)
-                cpu.memory[loc] = value.eval(cpu)
-            else:
-                cpu.registers[self.index] = value.eval(cpu)
-    
-    def __repr__(self):
-        if isinstance(self.index, basestring):
-            return self.index
-        out = REGISTER_NAMES[self.index]
-        if self.offset is not None:
-            out = '0x%x + %s' % (self.offset, out)
-        if self.offset is not None or self.indirect:
-            out = '[%s]' % out
-        return out
-
-
-cdef class LiteralValue(BaseValue):
-    cpdef eval(self, DCPU16 cpu):
-        return self.value
-    def __repr__(self):
-        return '0x%x' % self.value
-
-
-cdef class IndirectValue(BaseValue):
-    cpdef eval(self, DCPU16 cpu):
-        return cpu.memory[self.value]
-    def __repr__(self):
-        return '[0x%x]' % self.value
-    cpdef save(self, DCPU16 cpu, BaseValue value):
-        cpu.memory[self.value] = value.eval(cpu)
-
-
-cdef class StackValue(BaseValue):
-    def __repr__(self):
-        if self.value < 0:
-            return 'PUSH'
-        if self.value > 0:
-            return 'POP'
-        return 'PEEK'
-    cpdef eval(self, DCPU16 cpu):
-        if self.value < 0:
-            cpu.SP = (cpu.SP - 1) % 0x10000
-            return cpu.memory[cpu.SP]
-        if self.value > 0:
-            val = cpu.memory[cpu.SP]
-            cpu.SP = (cpu.SP + 1) % 0x10000
-            return val
-        else:
-            return cpu.memory[cpu.SP]
-
-
 cdef class BasicOperation(object):
     
-    def __init__(self, BaseValue a, BaseValue b):
+    def __init__(self, values.BaseValue a, values.BaseValue b):
         self.a = a
         self.b = b
     
@@ -144,7 +50,7 @@ cdef class BasicOperation(object):
 
 cdef class NonBasicOperation(BasicOperation):
 
-    def __init__(self, BaseValue a):
+    def __init__(self, values.BaseValue a):
         self.a = a
         
     def __repr__(self):
@@ -163,7 +69,7 @@ cdef class OpSUB(BasicOperation):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = 0xffff if bval > aval else 0
-        self.a.save(cpu, LiteralValue((aval - bval) & 0xffff))
+        self.a.save(cpu, values.LiteralValue((aval - bval) & 0xffff))
     
 cdef class OpMUL(BasicOperation):
     pass
@@ -176,22 +82,22 @@ cdef class OpSHL(BasicOperation):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = ((aval << bval) >> 16 ) & 0xffff
-        self.a.save(cpu, LiteralValue((aval << bval) & 0xffff))    
+        self.a.save(cpu, values.LiteralValue((aval << bval) & 0xffff))    
 cdef class OpSHR(BasicOperation):
     cdef run(self, DCPU16 cpu):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = ((aval << 16) >> bval) & 0xffff
-        self.a.save(cpu, LiteralValue(aval >> bval))
+        self.a.save(cpu, values.LiteralValue(aval >> bval))
 cdef class OpAND(BasicOperation):
     cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, LiteralValue(self.a.eval(cpu) & self.b.eval(cpu)))
+        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) & self.b.eval(cpu)))
 cdef class OpBOR(BasicOperation):
     cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, LiteralValue(self.a.eval(cpu) | self.b.eval(cpu)))
+        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) | self.b.eval(cpu)))
 cdef class OpXOR(BasicOperation):
     cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, LiteralValue(self.a.eval(cpu) ^ self.b.eval(cpu)))
+        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) ^ self.b.eval(cpu)))
 cdef class OpIFE(BasicOperation):
     cdef run(self, DCPU16 cpu):
         cdef unsigned short aval = self.a.eval(cpu)
@@ -258,41 +164,41 @@ cdef class DCPU16(object):
         self.PC += 1
         return word
     
-    cdef BaseValue get_op_value(self, unsigned short value):
+    cdef values.BaseValue get_op_value(self, unsigned short value):
     
         # Registers.
         if value <= 0x07:
-            return RegisterValue(value)
+            return values.RegisterValue(value)
     
         # Indirect registers.
         if value <= 0x0f:
-            return RegisterValue(value - 0x08, indirect=True)
+            return values.RegisterValue(value - 0x08, indirect=True)
     
         # Indirect register with offset.
         if value <= 0x17:
-            return RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
+            return values.RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
     
         if value == 0x18:
-            return StackValue(1) # POP
+            return values.StackValue(1) # POP
         if value == 0x19:
-            return StackValue(0) # PEEK
+            return values.StackValue(0) # PEEK
         if value == 0x1a:
-            return StackValue(-1) # PUSH
+            return values.StackValue(-1) # PUSH
         
         if value == 0x1b:
-            return RegisterValue('SP')
+            return values.RegisterValue('SP')
         if value == 0x1c:
-            return RegisterValue('PC')
+            return values.RegisterValue('PC')
         if value == 0x1d:
-            return RegisterValue('O')
+            return values.RegisterValue('O')
     
         if value == 0x1e:
-            return IndirectValue(self.get_next_word())
+            return values.IndirectValue(self.get_next_word())
         if value == 0x1f:
-            return LiteralValue(self.get_next_word())
+            return values.LiteralValue(self.get_next_word())
     
         if value >= 0x20 and value <= 0x3f:
-            return LiteralValue(value - 0x20)
+            return values.LiteralValue(value - 0x20)
     
         raise ValueError('unknown value 0x%04x' % value)
     
@@ -321,7 +227,7 @@ cdef class DCPU16(object):
         cdef unsigned short raw_a = (word >> 4) & 0x3f
         cdef unsigned short raw_b = (word >> 10) & 0x3f    
         
-        cdef BaseValue a, b
+        cdef values.BaseValue a, b
         if opcode:
             
             a = self.get_op_value(raw_a)
