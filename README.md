@@ -6,11 +6,8 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 - pull in examples from https://github.com/jtauber/DCPU-16-Examples
 
-- disassembler (done, in `dis.py`)
-	- rewrite in Cython or C++
-	
-- emulator (partially done, in `dis.py`)
-	- rewrite in Cython or C++
+- disassembler script
+- emulator script
 	
 - assembler
 	- assemble into object files
@@ -20,3 +17,13 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	- link assembled object files and resolve all symbols
 
 - C compiler
+
+- optimize
+	- easly binding Cython everywhere
+
+- move modules into a package
+
+- values
+	- rename load/save to get/set
+	- save should take `unsigned short` value
+	

@@ -4,35 +4,33 @@ from cpu cimport CPU
 REGISTER_NAMES = 'ABCXYZIJ'
 
 
-
-
 cdef class Base(object):
         
     def __init__(self, value):
         self.value = value
     
-    cpdef eval(self, CPU cpu):
+    cdef unsigned short eval(self, CPU cpu) except *:
         raise RuntimeError('cannot eval %r' % self)
 
-    cpdef save(self, CPU cpu, Base value):
+    cdef void save(self, CPU cpu, Base value) except *:
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.value)
 
 
-cdef class RegisterValue(Base):
+cdef class Register(Base):
     
     cdef object index
-    cdef object indirect
-    cdef object offset
+    cdef bint indirect
+    cdef int offset
     
-    def __init__(self, index, indirect=False, offset=None):
+    def __init__(self, index, indirect=False, offset=0):
         self.index = index
         self.indirect = indirect
         self.offset = offset
     
-    cpdef eval(self, CPU cpu):
+    cdef unsigned short eval(self, CPU cpu):
         if isinstance(self.index, basestring):
             return getattr(cpu, self.index)
         if self.indirect or self.offset:
@@ -41,7 +39,7 @@ cdef class RegisterValue(Base):
         else:
             return cpu.registers[self.index]
     
-    cpdef save(self, CPU cpu, Base value):
+    cdef void save(self, CPU cpu, Base value):
         if isinstance(self.index, basestring):
             if self.index == 'PC':
                 cpu.PC = value.eval(cpu)
@@ -67,30 +65,37 @@ cdef class RegisterValue(Base):
         return out
 
 
-cdef class LiteralValue(Base):
-    cpdef eval(self, CPU cpu):
+cdef class Literal(Base):
+
+    cdef unsigned short eval(self, CPU cpu):
         return self.value
+    
     def __repr__(self):
         return '0x%x' % self.value
 
 
-cdef class IndirectValue(Base):
-    cpdef eval(self, CPU cpu):
+cdef class Indirect(Base):
+
+    cdef unsigned short eval(self, CPU cpu):
         return cpu.memory[self.value]
+        
     def __repr__(self):
         return '[0x%x]' % self.value
-    cpdef save(self, CPU cpu, Base value):
+        
+    cdef void save(self, CPU cpu, Base value):
         cpu.memory[self.value] = value.eval(cpu)
 
 
-cdef class StackValue(Base):
+cdef class Stack(Base):
+
     def __repr__(self):
         if self.value < 0:
             return 'PUSH'
         if self.value > 0:
             return 'POP'
         return 'PEEK'
-    cpdef eval(self, CPU cpu):
+    
+    cdef unsigned short eval(self, CPU cpu):
         if self.value < 0:
             cpu.SP = (cpu.SP - 1) % 0x10000
             return cpu.memory[cpu.SP]

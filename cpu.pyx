@@ -71,37 +71,37 @@ cdef class CPU(object):
     
         # Registers.
         if value <= 0x07:
-            return values.RegisterValue(value)
+            return values.Register(value)
     
         # Indirect registers.
         if value <= 0x0f:
-            return values.RegisterValue(value - 0x08, indirect=True)
+            return values.Register(value - 0x08, indirect=True)
     
         # Indirect register with offset.
         if value <= 0x17:
-            return values.RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
+            return values.Register(value - 0x10, indirect=True, offset=self.get_next_word())
     
         if value == 0x18:
-            return values.StackValue(1) # POP
+            return values.Stack(1) # POP
         if value == 0x19:
-            return values.StackValue(0) # PEEK
+            return values.Stack(0) # PEEK
         if value == 0x1a:
-            return values.StackValue(-1) # PUSH
+            return values.Stack(-1) # PUSH
         
         if value == 0x1b:
-            return values.RegisterValue('SP')
+            return values.Register('SP')
         if value == 0x1c:
-            return values.RegisterValue('PC')
+            return values.Register('PC')
         if value == 0x1d:
-            return values.RegisterValue('O')
+            return values.Register('O')
     
         if value == 0x1e:
-            return values.IndirectValue(self.get_next_word())
+            return values.Indirect(self.get_next_word())
         if value == 0x1f:
-            return values.LiteralValue(self.get_next_word())
+            return values.Literal(self.get_next_word())
     
         if value >= 0x20 and value <= 0x3f:
-            return values.LiteralValue(value - 0x20)
+            return values.Literal(value - 0x20)
     
         raise ValueError('unknown value 0x%04x' % value)
     

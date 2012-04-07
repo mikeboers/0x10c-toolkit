@@ -50,7 +50,7 @@ class BaseValue(object):
         return '%s(%r)' % (self.__class__.__name__, self.value)
 
 
-class RegisterValue(BaseValue):
+class Register(BaseValue):
     
     def __init__(self, index, indirect=False, offset=None):
         self.index = index
@@ -87,14 +87,14 @@ class RegisterValue(BaseValue):
         return out
 
 
-class LiteralValue(BaseValue):
+class Literal(BaseValue):
     def eval(self, cpu):
         return self.value
     def __repr__(self):
         return '0x%x' % self.value
 
 
-class IndirectValue(BaseValue):
+class Indirect(BaseValue):
     def eval(self, cpu):
         return cpu.memory[self.value]
     def __repr__(self):
@@ -103,7 +103,7 @@ class IndirectValue(BaseValue):
         cpu.memory[self.value] = value.eval(cpu)
 
 
-class StackValue(BaseValue):
+class Stack(BaseValue):
     def __repr__(self):
         if self.value < 0:
             return 'PUSH'
@@ -236,7 +236,7 @@ class CPU(object):
         aval = a.eval(self)
         bval = b.eval(self)
         self.O = 0xffff if bval > aval else 0
-        a.save(self, LiteralValue((aval - bval) & 0xffff))
+        a.save(self, Literal((aval - bval) & 0xffff))
     
     def do_IFN(self, a, b):
         aval = a.eval(self)
@@ -244,13 +244,13 @@ class CPU(object):
         self.skip = aval == bval
     
     def do_AND(self, a, b):
-        a.save(self, LiteralValue(a.eval(self) & b.eval(self)))
+        a.save(self, Literal(a.eval(self) & b.eval(self)))
     
     def do_BOR(self, a, b):
-        a.save(self, LiteralValue(a.eval(self) | b.eval(self)))
+        a.save(self, Literal(a.eval(self) | b.eval(self)))
     
     def do_XOR(self, a, b):
-        a.save(self, LiteralValue(a.eval(self) ^ b.eval(self)))
+        a.save(self, Literal(a.eval(self) ^ b.eval(self)))
 
     def do_JSR(self, a, b):
         aval = a.eval(self)
@@ -262,13 +262,13 @@ class CPU(object):
         aval = a.eval(self)
         bval = b.eval(self)
         self.O = ((aval << bval) >> 16 ) & 0xffff
-        a.save(self, LiteralValue((aval << bval) & 0xffff))
+        a.save(self, Literal((aval << bval) & 0xffff))
     
     def do_SHR(self, a, b):
         aval = a.eval(self)
         bval = b.eval(self)
         self.O = ((aval << 16) >> bval) & 0xffff
-        a.save(self, LiteralValue(aval >> bval))
+        a.save(self, Literal(aval >> bval))
     
     def get_next_word(self):
         word = self.memory[self.PC]
@@ -279,37 +279,37 @@ class CPU(object):
     
         # Registers.
         if value <= 0x07:
-            return RegisterValue(value)
+            return Register(value)
     
         # Indirect registers.
         if value <= 0x0f:
-            return RegisterValue(value - 0x08, indirect=True)
+            return Register(value - 0x08, indirect=True)
     
         # Indirect register with offset.
         if value <= 0x17:
-            return RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
+            return Register(value - 0x10, indirect=True, offset=self.get_next_word())
     
         if value == 0x18:
-            return StackValue(1) # POP
+            return Stack(1) # POP
         if value == 0x19:
-            return StackValue(0) # PEEK
+            return Stack(0) # PEEK
         if value == 0x1a:
-            return StackValue(-1) # PUSH
+            return Stack(-1) # PUSH
         
         if value == 0x1b:
-            return RegisterValue('SP')
+            return Register('SP')
         if value == 0x1c:
-            return RegisterValue('PC')
+            return Register('PC')
         if value == 0x1d:
-            return RegisterValue('O')
+            return Register('O')
     
         if value == 0x1e:
-            return IndirectValue(self.get_next_word())
+            return Indirect(self.get_next_word())
         if value == 0x1f:
-            return LiteralValue(self.get_next_word())
+            return Literal(self.get_next_word())
     
         if value >= 0x20 and value <= 0x3f:
-            return LiteralValue(value - 0x20)
+            return Literal(value - 0x20)
     
         raise ValueError('unknown value 0x%04x' % value)
 

@@ -41,7 +41,7 @@ cdef class SUB(Basic):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = 0xffff if bval > aval else 0
-        self.a.save(cpu, values.LiteralValue((aval - bval) & 0xffff))
+        self.a.save(cpu, values.Literal((aval - bval) & 0xffff))
     
 cdef class MUL(Basic):
     pass
@@ -54,22 +54,22 @@ cdef class SHL(Basic):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = ((aval << bval) >> 16 ) & 0xffff
-        self.a.save(cpu, values.LiteralValue((aval << bval) & 0xffff))    
+        self.a.save(cpu, values.Literal((aval << bval) & 0xffff))    
 cdef class SHR(Basic):
     cdef run(self, CPU cpu):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = ((aval << 16) >> bval) & 0xffff
-        self.a.save(cpu, values.LiteralValue(aval >> bval))
+        self.a.save(cpu, values.Literal(aval >> bval))
 cdef class AND(Basic):
     cdef run(self, CPU cpu):
-        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) & self.b.eval(cpu)))
+        self.a.save(cpu, values.Literal(self.a.eval(cpu) & self.b.eval(cpu)))
 cdef class BOR(Basic):
     cdef run(self, CPU cpu):
-        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) | self.b.eval(cpu)))
+        self.a.save(cpu, values.Literal(self.a.eval(cpu) | self.b.eval(cpu)))
 cdef class XOR(Basic):
     cdef run(self, CPU cpu):
-        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) ^ self.b.eval(cpu)))
+        self.a.save(cpu, values.Literal(self.a.eval(cpu) ^ self.b.eval(cpu)))
 cdef class IFE(Basic):
     cdef run(self, CPU cpu):
         cdef unsigned short aval = self.a.eval(cpu)

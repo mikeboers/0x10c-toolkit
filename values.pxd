@@ -3,7 +3,7 @@ from cpu cimport CPU
 
 cdef class Base(object):
     
-    cdef object value
+    cdef unsigned short value
     
-    cpdef eval(self, CPU cpu)
-    cpdef save(self, CPU cpu, Base value)
+    cdef unsigned short eval(self, CPU cpu)
+    cdef void save(self, CPU cpu, Base value)
