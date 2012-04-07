@@ -26,4 +26,5 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 - values
 	- rename load/save to get/set
 	- save should take `unsigned short` value
-	
+
+- direct/indirect labels
