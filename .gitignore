@@ -5,3 +5,6 @@ include
 man
 
 *.pyc
+build
+*.so
+*.c
