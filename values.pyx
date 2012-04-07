@@ -17,6 +17,9 @@ cdef class Base(object):
     
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.value)
+    
+    def to_code(self):
+        raise NotImplementedError(self.__class__.__name__)
 
 
 cdef class Register(Base):
@@ -63,6 +66,16 @@ cdef class Register(Base):
         if self.offset is not None or self.indirect:
             out = '[%s]' % out
         return out
+    
+    def to_code(self):
+        if isinstance(self.index, basestring):
+            return dict(PC=0x1c, SP=0x1b, O=0x1d)[self.index], ()
+        
+        if self.offset:
+            return 0x10 + self.index, (self.offset)
+        if self.indirect:
+            return 0x08 + self.index, ()
+        return self.index, ()
 
 
 cdef class Literal(Base):
@@ -72,6 +85,11 @@ cdef class Literal(Base):
     
     def __repr__(self):
         return '0x%x' % self.value
+    
+    def to_code(self):
+        if self.value <= 0x1f:
+            return 0x20 + self.value, ()
+        return 0x1f, (self.value, )
 
 
 cdef class Indirect(Base):
@@ -84,6 +102,9 @@ cdef class Indirect(Base):
         
     cdef void save(self, CPU cpu, unsigned short value):
         cpu.memory[self.value] = value
+    
+    def to_code(self):
+        return 0x1e, (self.value, )
 
 
 cdef class Stack(Base):
@@ -105,3 +126,10 @@ cdef class Stack(Base):
             return val
         else:
             return cpu.memory[cpu.SP]
+    
+    def to_code(self):
+        if self.value < 0:
+            return 0x1a, ()
+        if self.value > 0:
+            return 0x18, ()
+        return 0x19, ()

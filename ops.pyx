@@ -18,6 +18,12 @@ cdef class Basic(Base):
     
     def __repr__(self):
         return '%s %r, %r' % (self.__class__.__name__, self.a, self.b)
+    
+    def to_code(self):
+        opcode = basic_cls_to_code[self.__class__]
+        a, a_extra = self.a.to_code()
+        b, b_extra = self.b.to_code()
+        return (opcode + ((a & 0x3f) << 4) + ((b & 0x3f) << 10) ,) + a_extra + b_extra
 
 
 cdef class NonBasic(Base):
@@ -27,9 +33,16 @@ cdef class NonBasic(Base):
         
     def __repr__(self):
         return '%s %r' % (self.__class__.__name__, self.a)
+    
+    def to_code(self):
+        opcode = basic_cls_to_code[self.__class__]
+        a, a_extra = self.a.to_code()
+        return (((opcode & 0x3f) << 4) + ((a & 0x3f) << 10) ,) + a_extra
+        
 
 
 cdef class SET(Basic):
+    
     cdef run(self, CPU cpu):
         self.a.save(cpu, self.b.eval(cpu))
 
@@ -123,4 +136,17 @@ cdef class JSR(NonBasic):
         cpu.SP = cpu.SP - 1
         cpu.memory[cpu.SP] = cpu.PC
         cpu.PC = aval
-    
+
+
+
+basic_code_to_cls = dict(enumerate([
+    None, SET, ADD, SUB, MUL, DIV, MOD, SHL, SHR, AND, BOR, XOR, IFE, IFN, IFG, IFB
+]))
+
+basic_cls_to_code = dict(reversed(x) for x in basic_code_to_cls.iteritems())
+
+nonbasic_code_to_cls = dict(enumerate([
+    None, JSR
+]))
+
+nonbasic_cls_to_code = dict(reversed(x) for x in nonbasic_code_to_cls.iteritems())
