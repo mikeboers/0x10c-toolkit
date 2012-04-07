@@ -12,7 +12,7 @@ cdef class Base(object):
     cdef unsigned short eval(self, CPU cpu) except *:
         raise RuntimeError('cannot eval %r' % self)
 
-    cdef void save(self, CPU cpu, Base value) except *:
+    cdef void save(self, CPU cpu, unsigned short value) except *:
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
@@ -39,20 +39,20 @@ cdef class Register(Base):
         else:
             return cpu.registers[self.index]
     
-    cdef void save(self, CPU cpu, Base value):
+    cdef void save(self, CPU cpu, unsigned short value):
         if isinstance(self.index, basestring):
             if self.index == 'PC':
-                cpu.PC = value.eval(cpu)
+                cpu.PC = value
             elif self.index == 'SP':
-                cpu.SP == value.eval(cpu)
+                cpu.SP == value
             else:
-                cpu.O == value.evap(cpu)
+                cpu.O == value
         else:
             if self.indirect or self.offset:
                 loc = cpu.registers[self.index] + (self.offset or 0)
-                cpu.memory[loc] = value.eval(cpu)
+                cpu.memory[loc] = value
             else:
-                cpu.registers[self.index] = value.eval(cpu)
+                cpu.registers[self.index] = value
     
     def __repr__(self):
         if isinstance(self.index, basestring):
@@ -82,8 +82,8 @@ cdef class Indirect(Base):
     def __repr__(self):
         return '[0x%x]' % self.value
         
-    cdef void save(self, CPU cpu, Base value):
-        cpu.memory[self.value] = value.eval(cpu)
+    cdef void save(self, CPU cpu, unsigned short value):
+        cpu.memory[self.value] = value
 
 
 cdef class Stack(Base):
