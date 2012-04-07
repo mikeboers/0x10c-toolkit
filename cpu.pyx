@@ -67,7 +67,7 @@ cdef class CPU(object):
         self.PC += 1
         return word
     
-    cdef values.BaseValue get_op_value(self, unsigned short value):
+    cdef values.Base get_op_value(self, unsigned short value):
     
         # Registers.
         if value <= 0x07:
@@ -130,7 +130,7 @@ cdef class CPU(object):
         cdef unsigned short raw_a = (word >> 4) & 0x3f
         cdef unsigned short raw_b = (word >> 10) & 0x3f    
         
-        cdef values.BaseValue a, b
+        cdef values.Base a, b
         if opcode:
             
             a = self.get_op_value(raw_a)

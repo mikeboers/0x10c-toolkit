@@ -1,6 +1,5 @@
 from cpu cimport CPU
-from values cimport BaseValue
-
+cimport values
 
 cdef class Base(object):
     
@@ -9,11 +8,11 @@ cdef class Base(object):
 
 cdef class Basic(Base):
 
-        cdef BaseValue a
-        cdef BaseValue b
+        cdef values.Base a
+        cdef values.Base b
 
 
 cdef class NonBasic(Base):
 
-        cdef BaseValue a
+        cdef values.Base a
 

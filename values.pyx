@@ -6,7 +6,7 @@ REGISTER_NAMES = 'ABCXYZIJ'
 
 
 
-cdef class BaseValue(object):
+cdef class Base(object):
         
     def __init__(self, value):
         self.value = value
@@ -14,14 +14,14 @@ cdef class BaseValue(object):
     cpdef eval(self, CPU cpu):
         raise RuntimeError('cannot eval %r' % self)
 
-    cpdef save(self, CPU cpu, BaseValue value):
+    cpdef save(self, CPU cpu, Base value):
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.value)
 
 
-cdef class RegisterValue(BaseValue):
+cdef class RegisterValue(Base):
     
     cdef object index
     cdef object indirect
@@ -41,7 +41,7 @@ cdef class RegisterValue(BaseValue):
         else:
             return cpu.registers[self.index]
     
-    cpdef save(self, CPU cpu, BaseValue value):
+    cpdef save(self, CPU cpu, Base value):
         if isinstance(self.index, basestring):
             if self.index == 'PC':
                 cpu.PC = value.eval(cpu)
@@ -67,23 +67,23 @@ cdef class RegisterValue(BaseValue):
         return out
 
 
-cdef class LiteralValue(BaseValue):
+cdef class LiteralValue(Base):
     cpdef eval(self, CPU cpu):
         return self.value
     def __repr__(self):
         return '0x%x' % self.value
 
 
-cdef class IndirectValue(BaseValue):
+cdef class IndirectValue(Base):
     cpdef eval(self, CPU cpu):
         return cpu.memory[self.value]
     def __repr__(self):
         return '[0x%x]' % self.value
-    cpdef save(self, CPU cpu, BaseValue value):
+    cpdef save(self, CPU cpu, Base value):
         cpu.memory[self.value] = value.eval(cpu)
 
 
-cdef class StackValue(BaseValue):
+cdef class StackValue(Base):
     def __repr__(self):
         if self.value < 0:
             return 'PUSH'

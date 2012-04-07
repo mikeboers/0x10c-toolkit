@@ -1,4 +1,4 @@
-from values cimport BaseValue
+cimport values
 cimport ops
 
 
@@ -16,5 +16,5 @@ cdef class CPU(object):
     cpdef _run_one(self)
     cdef unsigned short get_next_word(self)
     cdef ops.Base get_next_instruction(self)
-    cdef BaseValue get_op_value(self, unsigned short value)
+    cdef values.Base get_op_value(self, unsigned short value)
     

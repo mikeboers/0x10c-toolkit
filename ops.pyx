@@ -12,7 +12,7 @@ cdef class Base(object):
 
 cdef class Basic(Base):
 
-    def __init__(self, values.BaseValue a, values.BaseValue b):
+    def __init__(self, values.Base a, values.Base b):
         self.a = a
         self.b = b
     
@@ -22,7 +22,7 @@ cdef class Basic(Base):
 
 cdef class NonBasic(Base):
 
-    def __init__(self, values.BaseValue a):
+    def __init__(self, values.Base a):
         self.a = a
         
     def __repr__(self):
