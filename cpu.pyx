@@ -130,9 +130,6 @@ cdef class StackValue(BaseValue):
 
 
 cdef class BasicOperation(object):
-
-    cdef BaseValue a
-    cdef BaseValue b
     
     def __init__(self, BaseValue a, BaseValue b):
         self.a = a
@@ -179,33 +176,46 @@ cdef class OpSHL(BasicOperation):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.O = ((aval << bval) >> 16 ) & 0xffff
-        self.a.save(cpu, LiteralValue((aval << bval) & 0xffff))
-    
+        self.a.save(cpu, LiteralValue((aval << bval) & 0xffff))    
 cdef class OpSHR(BasicOperation):
-    pass
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.O = ((aval << 16) >> bval) & 0xffff
+        self.a.save(cpu, LiteralValue(aval >> bval))
 cdef class OpAND(BasicOperation):
-    pass
+    cdef run(self, DCPU16 cpu):
+        self.a.save(cpu, LiteralValue(self.a.eval(cpu) & self.b.eval(cpu)))
 cdef class OpBOR(BasicOperation):
-    pass
+    cdef run(self, DCPU16 cpu):
+        self.a.save(cpu, LiteralValue(self.a.eval(cpu) | self.b.eval(cpu)))
 cdef class OpXOR(BasicOperation):
-    pass
+    cdef run(self, DCPU16 cpu):
+        self.a.save(cpu, LiteralValue(self.a.eval(cpu) ^ self.b.eval(cpu)))
 cdef class OpIFE(BasicOperation):
-    pass
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.skip = aval != bval
 cdef class OpIFN(BasicOperation):
     cdef run(self, DCPU16 cpu):
         cdef unsigned short aval = self.a.eval(cpu)
         cdef unsigned short bval = self.b.eval(cpu)
         cpu.skip = aval == bval
-    
 cdef class OpIFG(BasicOperation):
-    pass
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.skip = aval <= bval
 cdef class OpIFB(BasicOperation):
-    pass
-
+    cdef run(self, DCPU16 cpu):
+        cdef unsigned short aval = self.a.eval(cpu)
+        cdef unsigned short bval = self.b.eval(cpu)
+        cpu.skip = not (aval & bval)
 cdef class OpJSR(NonBasicOperation):
     cdef run(self, DCPU16 cpu):
         cdef unsigned short aval = self.a.eval(cpu)
-        cpu.SP = (cpu.SP - 1) % 0x10000
+        cpu.SP = cpu.SP - 1
         cpu.memory[cpu.SP] = cpu.PC
         cpu.PC = aval
     
@@ -290,7 +300,6 @@ cdef class DCPU16(object):
         old_PC = self.PC
         if location:
             self.PC = location
-        
         self._disassemble()
         self.PC = old_PC
     
@@ -299,19 +308,13 @@ cdef class DCPU16(object):
             self._disassemble_one()
     
     def _disassemble_one(self):
-        
         start_PC = self.PC
         cdef BasicOperation op = self.get_next_instruction()        
         end_PC = self.PC
-        
-        # if basic:
-        #     out = '%s %s, %s' % (BASIC_OPCODES[opcode], a, b)
-        # else:
-        #     out = '%s %s' % (NONBASIC_OPCODES[opcode], a)
         dump = ' '.join('%04x' % x for x in self.memory[start_PC:end_PC])
         print '%-30r; %04x: %s' % (op, start_PC, dump)
     
-    def get_next_instruction(self):
+    cdef BasicOperation get_next_instruction(self):
         
         cdef unsigned short word = self.get_next_word()
         cdef unsigned short opcode = word & 0xf
@@ -365,9 +368,9 @@ cdef class DCPU16(object):
             
         
     cpdef run(self):
-        debug=False
-        counter = 0
-        last_PC = -1
+        cdef bint debug = True
+        cdef unsigned long counter = 0
+        cdef int last_PC = -1
         while self.memory[self.PC] and last_PC != self.PC:
             last_PC = self.PC
             if debug:
@@ -384,7 +387,7 @@ cdef class DCPU16(object):
             self._run_one()
         return counter
     
-    def _run_one(self):
+    cpdef _run_one(self):
         cdef BasicOperation op = self.get_next_instruction()
         if self.skip:
             self.skip = False
@@ -394,21 +397,7 @@ cdef class DCPU16(object):
     
     
     
-    def do_AND(self, a, b):
-        a.save(self, LiteralValue(a.eval(self) & b.eval(self)))
-    
-    def do_BOR(self, a, b):
-        a.save(self, LiteralValue(a.eval(self) | b.eval(self)))
-    
-    def do_XOR(self, a, b):
-        a.save(self, LiteralValue(a.eval(self) ^ b.eval(self)))
 
-        
-    def do_SHR(self, a, b):
-        aval = a.eval(self)
-        bval = b.eval(self)
-        self.O = ((aval << 16) >> bval) & 0xffff
-        a.save(self, LiteralValue(aval >> bval))
     
     
     
