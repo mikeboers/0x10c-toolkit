@@ -61,9 +61,9 @@ cdef class Register(Base):
         if isinstance(self.index, basestring):
             return self.index
         out = REGISTER_NAMES[self.index]
-        if self.offset is not None:
+        if self.offset:
             out = '0x%x + %s' % (self.offset, out)
-        if self.offset is not None or self.indirect:
+        if self.offset or self.indirect:
             out = '[%s]' % out
         return out
     
@@ -105,6 +105,21 @@ cdef class Indirect(Base):
     
     def to_code(self):
         return 0x1e, (self.value, )
+
+
+cdef class Label(Base):
+
+    cdef public object label
+    
+    def __init__(self, label):
+        self.label = label
+        self.value = 0
+    
+    def __repr__(self):
+        return self.label
+    
+    def to_code(self):
+        return 0x1e, (self.label, )
 
 
 cdef class Stack(Base):

@@ -143,10 +143,14 @@ basic_code_to_cls = dict(enumerate([
     None, SET, ADD, SUB, MUL, DIV, MOD, SHL, SHR, AND, BOR, XOR, IFE, IFN, IFG, IFB
 ]))
 
-basic_cls_to_code = dict(reversed(x) for x in basic_code_to_cls.iteritems())
+basic_name_to_cls = dict((cls.__name__, cls) for cls in basic_code_to_cls.itervalues() if cls)
+
+basic_cls_to_code = dict(reversed(x) for x in basic_code_to_cls.iteritems() if x[1])
 
 nonbasic_code_to_cls = dict(enumerate([
     None, JSR
 ]))
 
-nonbasic_cls_to_code = dict(reversed(x) for x in nonbasic_code_to_cls.iteritems())
+nonbasic_name_to_cls = dict((cls.__name__, cls) for cls in nonbasic_code_to_cls.itervalues() if cls)
+
+nonbasic_cls_to_code = dict(reversed(x) for x in nonbasic_code_to_cls.iteritems() if x[1])
