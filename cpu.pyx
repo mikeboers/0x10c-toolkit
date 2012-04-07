@@ -3,128 +3,14 @@ import re
 cimport values
 import values
 
-BASIC_OPCODES = '''
-    XXX
-    SET
-    ADD
-    SUB
-    MUL
-    DIV
-    MOD
-    SHL
-    SHR
-    AND
-    BOR
-    XOR
-    IFE
-    IFN
-    IFG
-    IFB
-'''.strip().split()
-
-NONBASIC_OPCODES = '''
-    RSV
-    JSR
-'''.strip().split()
-
-REGISTER_NAMES = 'ABCXYZIJ'
+cimport ops
+import ops
 
 
 
 
 
 
-
-cdef class BasicOperation(object):
-    
-    def __init__(self, values.BaseValue a, values.BaseValue b):
-        self.a = a
-        self.b = b
-    
-    cdef run(self, DCPU16 cpu):
-        raise NotImplementedError(self.__class__.__name__)
-    
-    def __repr__(self):
-        return '%s %r, %r' % (self.__class__.__name__[-3:], self.a, self.b)
-
-
-cdef class NonBasicOperation(BasicOperation):
-
-    def __init__(self, values.BaseValue a):
-        self.a = a
-        
-    def __repr__(self):
-        return '%s %r' % (self.__class__.__name__[-3:], self.a)
-
-
-cdef class OpSET(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, self.b)
-
-cdef class OpADD(BasicOperation):
-    pass
-
-cdef class OpSUB(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.O = 0xffff if bval > aval else 0
-        self.a.save(cpu, values.LiteralValue((aval - bval) & 0xffff))
-    
-cdef class OpMUL(BasicOperation):
-    pass
-cdef class OpDIV(BasicOperation):
-    pass
-cdef class OpMOD(BasicOperation):
-    pass
-cdef class OpSHL(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.O = ((aval << bval) >> 16 ) & 0xffff
-        self.a.save(cpu, values.LiteralValue((aval << bval) & 0xffff))    
-cdef class OpSHR(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.O = ((aval << 16) >> bval) & 0xffff
-        self.a.save(cpu, values.LiteralValue(aval >> bval))
-cdef class OpAND(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) & self.b.eval(cpu)))
-cdef class OpBOR(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) | self.b.eval(cpu)))
-cdef class OpXOR(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        self.a.save(cpu, values.LiteralValue(self.a.eval(cpu) ^ self.b.eval(cpu)))
-cdef class OpIFE(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.skip = aval != bval
-cdef class OpIFN(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.skip = aval == bval
-cdef class OpIFG(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.skip = aval <= bval
-cdef class OpIFB(BasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cdef unsigned short bval = self.b.eval(cpu)
-        cpu.skip = not (aval & bval)
-cdef class OpJSR(NonBasicOperation):
-    cdef run(self, DCPU16 cpu):
-        cdef unsigned short aval = self.a.eval(cpu)
-        cpu.SP = cpu.SP - 1
-        cpu.memory[cpu.SP] = cpu.PC
-        cpu.PC = aval
-    
 
 
 
@@ -215,12 +101,12 @@ cdef class DCPU16(object):
     
     def _disassemble_one(self):
         start_PC = self.PC
-        cdef BasicOperation op = self.get_next_instruction()        
+        cdef ops.BasicOperation op = self.get_next_instruction()        
         end_PC = self.PC
         dump = ' '.join('%04x' % x for x in self.memory[start_PC:end_PC])
         print '%-30r; %04x: %s' % (op, start_PC, dump)
     
-    cdef BasicOperation get_next_instruction(self):
+    cdef ops.BasicOperation get_next_instruction(self):
         
         cdef unsigned short word = self.get_next_word()
         cdef unsigned short opcode = word & 0xf
@@ -234,40 +120,40 @@ cdef class DCPU16(object):
             b = self.get_op_value(raw_b)
             
             if opcode == 1:
-                return OpSET(a, b)
+                return ops.OpSET(a, b)
             elif opcode == 2:
-                return OpADD(a, b)
+                return ops.OpADD(a, b)
             elif opcode == 3:
-                return OpSUB(a, b)
+                return ops.OpSUB(a, b)
             elif opcode == 4:
-                return OpMUL(a, b)
+                return ops.OpMUL(a, b)
             elif opcode == 5:
-                return OpDIV(a, b)
+                return ops.OpDIV(a, b)
             elif opcode == 6:
-                return OpMOD(a, b)
+                return ops.OpMOD(a, b)
             elif opcode == 7:
-                return OpSHL(a, b)
+                return ops.OpSHL(a, b)
             elif opcode == 8:
-                return OpSHR(a, b)
+                return ops.OpSHR(a, b)
             elif opcode == 9:
-                return OpAND(a, b)
+                return ops.OpAND(a, b)
             elif opcode == 0xa:
-                return OpBOR(a, b)
+                return ops.OpBOR(a, b)
             elif opcode == 0xb:
-                return OpXOR(a, b)
+                return ops.OpXOR(a, b)
             elif opcode == 0xc:
-                return OpIFE(a, b)
+                return ops.OpIFE(a, b)
             elif opcode == 0xd:
-                return OpIFN(a, b)
+                return ops.OpIFN(a, b)
             elif opcode == 0xe:
-                return OpIFG(a, b)
+                return ops.OpIFG(a, b)
             elif opcode == 0xf:
-                return OpIFB(a, b)
+                return ops.OpIFB(a, b)
             
         else:
             a = self.get_op_value(raw_b)
             if raw_a == 1:
-                return OpJSR(a)
+                return ops.OpJSR(a)
 
         raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_a, raw_b))
             
@@ -294,7 +180,7 @@ cdef class DCPU16(object):
         return counter
     
     cpdef _run_one(self):
-        cdef BasicOperation op = self.get_next_instruction()
+        cdef ops.BasicOperation op = self.get_next_instruction()
         if self.skip:
             self.skip = False
             return

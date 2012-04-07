@@ -8,5 +8,6 @@ setup(
     ext_modules = [
         Extension("cpu", ["cpu.pyx"]),
         Extension("values", ["values.pyx"]),
+        Extension("ops", ["ops.pyx"]),
     ]
 )

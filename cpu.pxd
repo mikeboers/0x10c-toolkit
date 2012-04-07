@@ -1,12 +1,7 @@
 from values cimport BaseValue
+from ops cimport BasicOperation
 
 
-cdef class BasicOperation(object):
-
-        cdef BaseValue a
-        cdef BaseValue b
-    
-        cdef run(self, DCPU16 cpu)
 
 
 cdef class DCPU16(object):
