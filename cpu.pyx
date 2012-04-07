@@ -1,6 +1,4 @@
-import sys
 import re
-import time
 
 
 BASIC_OPCODES = '''
@@ -31,33 +29,39 @@ REGISTER_NAMES = 'ABCXYZIJ'
 
 
 
+
+
 class Operation(object):
     pass
 
 
-class BaseValue(object):
-    
+cdef class BaseValue(object):
+        
     def __init__(self, value):
         self.value = value
     
-    def eval(self, cpu):
+    cpdef eval(self, DCPU16 cpu):
         raise RuntimeError('cannot eval %r' % self)
 
-    def save(self, cpu, value):
+    cpdef save(self, DCPU16 cpu, BaseValue value):
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.value)
 
 
-class RegisterValue(BaseValue):
+cdef class RegisterValue(BaseValue):
+    
+    cdef object index
+    cdef object indirect
+    cdef object offset
     
     def __init__(self, index, indirect=False, offset=None):
         self.index = index
         self.indirect = indirect
         self.offset = offset
     
-    def eval(self, cpu):
+    cpdef eval(self, DCPU16 cpu):
         if isinstance(self.index, basestring):
             return getattr(cpu, self.index)
         if self.indirect or self.offset:
@@ -66,9 +70,14 @@ class RegisterValue(BaseValue):
         else:
             return cpu.registers[self.index]
     
-    def save(self, cpu, value):
+    cpdef save(self, DCPU16 cpu, BaseValue value):
         if isinstance(self.index, basestring):
-            setattr(cpu, self.index, value.eval(cpu))
+            if self.index == 'PC':
+                cpu.PC = value.eval(cpu)
+            elif self.index == 'SP':
+                cpu.SP == value.eval(cpu)
+            else:
+                cpu.O == value.evap(cpu)
         else:
             if self.indirect or self.offset:
                 loc = cpu.registers[self.index] + (self.offset or 0)
@@ -87,30 +96,30 @@ class RegisterValue(BaseValue):
         return out
 
 
-class LiteralValue(BaseValue):
-    def eval(self, cpu):
+cdef class LiteralValue(BaseValue):
+    cpdef eval(self, DCPU16 cpu):
         return self.value
     def __repr__(self):
         return '0x%x' % self.value
 
 
-class IndirectValue(BaseValue):
-    def eval(self, cpu):
+cdef class IndirectValue(BaseValue):
+    cpdef eval(self, DCPU16 cpu):
         return cpu.memory[self.value]
     def __repr__(self):
         return '[0x%x]' % self.value
-    def save(self, cpu, value):
+    cpdef save(self, DCPU16 cpu, BaseValue value):
         cpu.memory[self.value] = value.eval(cpu)
 
 
-class StackValue(BaseValue):
+cdef class StackValue(BaseValue):
     def __repr__(self):
         if self.value < 0:
             return 'PUSH'
         if self.value > 0:
             return 'POP'
         return 'PEEK'
-    def eval(self, cpu):
+    cpdef eval(self, DCPU16 cpu):
         if self.value < 0:
             cpu.SP = (cpu.SP - 1) % 0x10000
             return cpu.memory[cpu.SP]
@@ -121,17 +130,15 @@ class StackValue(BaseValue):
         else:
             return cpu.memory[cpu.SP]
 
-        
-class DCPU16(object):
+
+cdef class DCPU16(object):
     
     def __init__(self):
-        self.registers = [0] * 8
         self.PC = 0
         self.SP = 0
         self.O = 0
-        self.memory = [0] * 0x10000
         self.skip = False
-    
+        
     def loads_hex(self, encoded, location=0):
         encoded = re.sub(r';.*$', '', encoded, 0, re.M) # strip comments
         encoded = re.sub(r'^.*:', '', encoded, 0, re.M) # strip addresses
@@ -152,7 +159,50 @@ class DCPU16(object):
                 for j in xrange(i, i + 8):
                     print '%04x' % (self.memory[j],),
                 print
-                
+    
+    cdef unsigned short get_next_word(self):
+        cdef unsigned short word = self.memory[self.PC]
+        self.PC += 1
+        return word
+    
+    cdef BaseValue get_op_value(self, unsigned short value):
+    
+        # Registers.
+        if value <= 0x07:
+            return RegisterValue(value)
+    
+        # Indirect registers.
+        if value <= 0x0f:
+            return RegisterValue(value - 0x08, indirect=True)
+    
+        # Indirect register with offset.
+        if value <= 0x17:
+            return RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
+    
+        if value == 0x18:
+            return StackValue(1) # POP
+        if value == 0x19:
+            return StackValue(0) # PEEK
+        if value == 0x1a:
+            return StackValue(-1) # PUSH
+        
+        if value == 0x1b:
+            return RegisterValue('SP')
+        if value == 0x1c:
+            return RegisterValue('PC')
+        if value == 0x1d:
+            return RegisterValue('O')
+    
+        if value == 0x1e:
+            return IndirectValue(self.get_next_word())
+        if value == 0x1f:
+            return LiteralValue(self.get_next_word())
+    
+        if value >= 0x20 and value <= 0x3f:
+            return LiteralValue(value - 0x20)
+    
+        raise ValueError('unknown value 0x%04x' % value)
+    
     def disassemble(self, location=None):
         old_PC = self.PC
         if location:
@@ -182,10 +232,7 @@ class DCPU16(object):
         word = self.get_next_word()
         opcode = word & 0xf
         a = (word >> 4) & 0x3f
-        b = (word >> 10) & 0x3f
-        
-        # print '%04x: %02x %02x %02x' % (self.PC, opcode, a, b)
-        
+        b = (word >> 10) & 0x3f        
         if opcode:
             basic = True
             a = self.get_op_value(a)
@@ -197,23 +244,23 @@ class DCPU16(object):
         
         return basic, opcode, a, b
     
-    def run(self, debug=False):
+    cpdef run(self):
+        debug=True
         counter = 0
         last_PC = -1
         while self.memory[self.PC] and last_PC != self.PC:
             last_PC = self.PC
-            
             if debug:
                 if counter % 16 == 0:
                     if counter:
                         print
-                    print ';', ' '.join('%4s' % x for x in '# PC SP O A B C X Y Z I J'.split())
+                    print ';', ' '.join(['%4s' % x for x in '# PC SP O A B C X Y Z I J'.split()])
                     print ';', '-----' * 12
             counter += 1
             if debug:
                 print '; %4x' % (counter - 1,),
-                print ' '.join('%4x' % getattr(self, x) for x in 'PC SP O'.split()),
-                print ' '.join('%4x' % self.registers[x] for x in xrange(8))
+                print ' '.join(['%4x' % x for x in [self.PC, self.SP, self.O]]),
+                print ' '.join(['%4x' % self.registers[x] for x in xrange(8)])
             self._run_one()
         return counter
     
@@ -270,72 +317,7 @@ class DCPU16(object):
         self.O = ((aval << 16) >> bval) & 0xffff
         a.save(self, LiteralValue(aval >> bval))
     
-    def get_next_word(self):
-        word = self.memory[self.PC]
-        self.PC += 1
-        return word
     
-    def get_op_value(self, value):
     
-        # Registers.
-        if value <= 0x07:
-            return RegisterValue(value)
     
-        # Indirect registers.
-        if value <= 0x0f:
-            return RegisterValue(value - 0x08, indirect=True)
-    
-        # Indirect register with offset.
-        if value <= 0x17:
-            return RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
-    
-        if value == 0x18:
-            return StackValue(1) # POP
-        if value == 0x19:
-            return StackValue(0) # PEEK
-        if value == 0x1a:
-            return StackValue(-1) # PUSH
         
-        if value == 0x1b:
-            return RegisterValue('SP')
-        if value == 0x1c:
-            return RegisterValue('PC')
-        if value == 0x1d:
-            return RegisterValue('O')
-    
-        if value == 0x1e:
-            return IndirectValue(self.get_next_word())
-        if value == 0x1f:
-            return LiteralValue(self.get_next_word())
-    
-        if value >= 0x20 and value <= 0x3f:
-            return LiteralValue(value - 0x20)
-    
-        raise ValueError('unknown value 0x%04x' % value)
-
-
-
-if __name__ == '__main__':
-    
-    if len(sys.argv) == 1:
-        infile = sys.stdin
-    elif len(sys.argv) == 2:
-        infile = open(sys.argv[1])
-    else:
-        print 'usage: %s [infile]' % (sys.argv[0])
-    
-    cpu = DCPU16()
-    cpu.loads_hex(infile.read())
-    
-    cpu.dump()
-    print
-    
-    cpu.disassemble()
-    print
-    
-    start = time.time()
-    steps = cpu.run()
-    print steps / (time.time() - start)
-    print 
-    
-    cpu.dump()
