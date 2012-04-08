@@ -49,7 +49,9 @@ class StringValue(values.Base):
 operations = []
 
 
-register_to_code = dict((x, i) for i, x in enumerate('ABCXYZIJ'))
+register_to_code = dict((x, i) for i, x in enumerate('''
+    A B C X Y Z I J SP PC O
+'''.strip().split()))
 
 
 def get_args(line):
@@ -78,7 +80,7 @@ def get_arg(line):
     
     REGISTER = r'(?:[ABCXYZIJ]|PC|SP|O)'
     def parse_register(raw):
-        return register_to_code.get(raw, raw)
+        return register_to_code[raw]
     
     def match(exp, line):
         return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line)
