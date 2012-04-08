@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
 
     cpu = CPU()
-    cpu.loads_hex(infile.read())
+    cpu.loads(infile.read())
 
     start = time.time()
     steps = cpu.run(debug=True)

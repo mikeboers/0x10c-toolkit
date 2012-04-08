@@ -16,7 +16,7 @@ class TestSample(TestCase):
         '''
         
         cpu = CPU()
-        cpu.loads_hex(source)
+        cpu.loads(source)
         cpu.run()
         
         self.assertEquals(cpu[0xffff], 0x16)

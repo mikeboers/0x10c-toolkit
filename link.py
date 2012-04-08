@@ -1,86 +1,157 @@
 import re
 import sys
 
+
+def parse_symbol_header(encoded):
+    out = []
+    for chunk in encoded.split(', '):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        m = re.match(r'(\w+)=0x([a-fA-F0-9]+)', chunk)
+        if m:
+            name, value = m.groups()
+            out.append((name, int(value, 16)))
+        else:
+            raise ValueError('could not parse symbol header chunk: %r' % chunk)
+    return out
+
+
+class Linker(object):
+    
+    def __init__(self):
+        self.objects = []
+        self.global_symbols = {}
+        self.code = []
+    
+    def loads(self, source, name='<string>'):
+        obj = Object(name)
+        obj.loads(source)
+        self.objects.append(obj)
+    
+    def load(self, infile, name='<file>'):
+        obj = Object(name)
+        obj.load(infile)
+        self.objects.append(obj)
+    
+    def link(self):
+        
+        self.code = []
+        
+        # Build up global symbols.
+        offset = 0
+        for obj in self.objects:
+            for name, value in obj.global_symbols:
+                self.global_symbols[name] = offset + value
+            offset += len(obj.code)
+            
+        # Resolve all symbols
+        symbols = {}
+        missing = []
+        offset = 0
+        for obj in self.objects:
+            
+            symbols.update(self.global_symbols)
+            for name, value in obj.local_symbols:
+                symbols[name] = offset + value
+            
+            code = obj.code[:]
+            
+            for name, from_ in obj.symbol_references:
+                to = symbols.get(name)
+                
+                if to is None:
+                    missing.append(name)
+                    continue
+                
+                code[from_] += to
+            
+            self.code.extend(code)
+            offset += len(code)
+                    
+        if missing:
+            for x in missing:
+                print 'undefined symbol: %s' % x
+            return False
+        
+        return True
+    
+    def dumps(self):
+    
+        out = []
+        for i, x in enumerate(self.code):
+            if i % 8 == 0:
+                if i:
+                    out.append('\n')
+                out.append('%04x: ' % i)
+            else:
+                out.append(' ')
+            out.append('%04x' % x)
+
+        print ''.join(out)
+        
+        
+        
+
+class Object(object):
+    
+    def __init__(self, name):
+        self.name = name
+        self.headers = {}
+        self.code = []
+    
+    def loads(self, source):
+        self.load(source.splitlines())
+    
+    def load(self, infile):
+        encoded = []
+        for line in infile:
+    
+            line = line.strip()
+            if not line:
+                continue
+    
+            # Extract headers.
+            m = re.match(r'; ([\w-]+): (.+)', line)
+            if m:
+                self.headers[m.group(1).lower()] = m.group(2)
+                continue
+    
+            m = re.match(r'^\s*(:\w+)?(.*:)?([0-9a-fA-F \t]*)([;#].*)?$', line)
+            if not m:
+                print 'could not parse line %r' % line
+                exit(1)
+            line = re.sub(r'\s+', '', m.group(3).lower())
+    
+            encoded.append(line)
+
+        encoded = ''.join(encoded)
+        for i in xrange(0, len(encoded), 4):
+            self.code.append(int(encoded[i:i + 4], 16))
+        
+        self.global_symbols = parse_symbol_header(self.headers.get('global-symbols', ''))
+        self.local_symbols = parse_symbol_header(self.headers.get('local-symbols', ''))
+        self.symbol_references = parse_symbol_header(self.headers.get('symbol-references', ''))
+        
+        
+            
+        
 if __name__ == '__main__':
     
     if len(sys.argv) == 1:
-        infile = sys.stdin
-    elif len(sys.argv) == 2:
-        infile = open(sys.argv[1])
+        infiles = [sys.stdin]
     else:
-        print 'usage: %s [infile]' % (sys.argv[0])
+        infiles = [open(x) for x in sys.argv[1:]]
 
-    headers = {}
-    encoded = []
-
-    for line in infile:
+    linker = Linker()
+    for infile in infiles:
+        linker.load(infile)
     
-        line = line.strip()
-        if not line:
-            continue
-    
-        # Extract headers.
-        m = re.match(r'; ([\w-]+): (.+)', line)
-        if m:
-            headers[m.group(1).lower()] = m.group(2)
-            continue
-    
-        m = re.match(r'^\s*(:\w+)?(.*:)?([0-9a-fA-F \t]*)([;#].*)?$', line)
-        if not m:
-            print 'could not parse line %r' % line
-            exit(1)
-        line = re.sub(r'\s+', '', m.group(3).lower())
-    
-        encoded.append(line)
-
-    code = []
-    encoded = ''.join(encoded)
-    for i in xrange(0, len(encoded), 4):
-        code.append(int(encoded[i:i + 4], 16))
-
-    def parse_symbol_header(encoded):
-        out = []
-        for chunk in encoded.split(', '):
-            chunk = chunk.strip()
-            if not chunk:
-                continue
-            m = re.match(r'(\w+)=0x([a-fA-F0-9]+)', chunk)
-            if m:
-                name, value = m.groups()
-                out.append((name, int(value, 16)))
-            else:
-                raise ValueError('could not parse symbol header chunk: %r' % chunk)
-        return out
-
-    global_symbols = dict(parse_symbol_header(headers.get('global-symbols', '')))
-    local_symbols = dict(parse_symbol_header(headers.get('local-symbols', '')))
-    symbol_references = parse_symbol_header(headers.get('symbol-references', ''))
-
-    found_all_symbols = True
-    for name, from_ in symbol_references:
-        to = local_symbols.get(name)
-        to = global_symbols.get(name) if name is None else to
-        if to is None:
-            print 'undefined symbol:', to
-            found_all_symbols = False
-            continue
-    
-        code[from_] += to
-
-    if not found_all_symbols:
+    if not linker.link():
         exit(1)
-
-    out = []
-    for i, x in enumerate(code):
-        if i % 8 == 0:
-            if i:
-                out.append('\n')
-            out.append('%04x: ' % i)
-        else:
-            out.append(' ')
-        out.append('%04x' % x)
-
-    print ''.join(out)
+    
+    print linker.dumps()
+    
 
 
 
