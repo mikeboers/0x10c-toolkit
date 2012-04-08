@@ -9,8 +9,7 @@ import values
 
 
 class Label(str):
-    def to_code(self):
-        return ()
+    pass
 
 
 custom_name_to_cls = {}
@@ -49,7 +48,10 @@ class Assembler(object):
     
     def __init__(self):
         self.operations = []
-
+        self.global_symbols = []
+        self.local_symbols = []
+        self.symbol_references = []
+    
     def _get_args(self, line):
         args = []
         while line:
@@ -188,27 +190,53 @@ class Assembler(object):
         
         self.operations.append(op)
 
+    def dump(self, file):
+        file.write(self.dumps())
+    
     def dumps(self):
         
-        code = []
-        labels = {}
+        raw_code = []
+                
         for op in self.operations:
+            
             if isinstance(op, Label):
-                labels[str(op)] = len(code)
-            code.extend(op.to_code())
-    
-            # print op
-            # print '\t', ' '.join('%04x' % x if isinstance(x, int) else x for x in op.to_code())
-            # print
-
-        code = [labels.get(x, x) for x in code]
-
+                self.local_symbols.append((str(op), len(raw_code)))
+            else:
+                raw_code.extend(op.to_code())
+        
+        code = []
+        for x in raw_code:
+            if isinstance(x, values.Label):
+                self.symbol_references.append((x.label, len(code)))
+                code.append(x.offset)
+            elif isinstance(x, int):
+                code.append(x)
+            else:
+                raise TypeError('cannot assemble code object %r' % x)
+        
+        out = []
+        for header_name, header_value in [
+            ('Global-Symbols', self.global_symbols),
+            ('Local-Symbols', self.local_symbols),
+            ('Symbol-References', self.symbol_references),
+        ]:
+            if header_value:
+                out.append('; %s:' % header_name)
+                for i, (sym, loc) in enumerate(header_value):
+                    out.append(', ' if i else ' ')
+                    out.append('%s=0x%04x' % (sym, loc))
+                out.append('\n')
+        
         for i, x in enumerate(code):
             if i % 8 == 0:
                 if i:
-                    print
-                print '%04x:' % i,
-            print '%04x' % x,
+                    out.append('\n')
+                out.append('%04x: ' % i)
+            else:
+                out.append(' ')
+            out.append('%04x' % x)
+    
+        return ''.join(out)
 
 
 
@@ -223,5 +251,5 @@ if __name__ == '__main__':
     
     asm = Assembler()
     asm.load(infile)
-    asm.dumps()
+    print asm.dumps()
     

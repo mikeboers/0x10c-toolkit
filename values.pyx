@@ -129,9 +129,9 @@ cdef class Label(Base):
     
     def to_code(self):
         if self.indirect:
-            return 0x1e, (self.label, )
+            return 0x1e, (self, )
         else:
-            return 0x1f, (self.label, )
+            return 0x1f, (self, )
 
 
 cdef class Stack(Base):
