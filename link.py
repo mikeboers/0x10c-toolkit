@@ -23,10 +23,12 @@ for line in infile:
         headers[m.group(1).lower()] = m.group(2)
         continue
     
-    line = re.sub(r'[#;].*$', '', line) # strip comments
-    line = re.sub(r'^.*:', '', line) # strip addresses
-    line = line.lower()
-    line = re.sub(r'[^0-9a-f]', '', line) # strip non-hex
+    m = re.match(r'^\s*(:\w+)?(.*:)?([0-9a-fA-F \t]*)([;#].*)?$', line)
+    if not m:
+        print 'could not parse line %r' % line
+        exit(1)
+    line = re.sub(r'\s+', '', m.group(3).lower())
+    
     encoded.append(line)
 
 code = []

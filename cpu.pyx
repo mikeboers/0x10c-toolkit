@@ -43,7 +43,6 @@ cdef class CPU(object):
     def loads_hex(self, encoded, location=0):
         encoded = re.sub(r'[#;].*$', '', encoded, 0, re.M) # strip comments
         encoded = re.sub(r'^.*:', '', encoded, 0, re.M) # strip addresses
-        encoded = encoded.lower()
         encoded = re.sub(r'[^0-9a-f]', '', encoded) # strip non-hex
         for i in xrange(len(encoded) / 4):
             self.memory[location + i] = int(encoded[4 * i:4 * i + 4], 16)
