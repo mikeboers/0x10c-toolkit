@@ -7,12 +7,14 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 - pull in examples from https://github.com/jtauber/DCPU-16-Examples
 - look for more TODOs http://dwilliamson.github.com/
 
-- disassembler script
-- emulator script
+√ disassembler script
+√ running script
+√ assembling script
+√ linking script
 	
 - assembler
-	- assemble into object files
-	- do not resolve symbols; output them into comments in the object files
+	√ assemble into object files
+	√ do not resolve symbols; output them into comments in the object files
 		; Global-Symbols: start=0x0
 		; Local-Symbols: loop=0x1234
 		; Symbol-References: loop=0x1500
@@ -21,11 +23,13 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 		benifits jumps to the first 0x1f words of code.
 	
 - linker
-	- link assembled object files and resolve all labels/symbols
+	√ link assembled object files and resolve all labels/symbols
 		- add final symbol addr into the words that are placeholders for it,
 		  which will allow us to have positive offsets from them
 	- if an object has start at the beginning, put it first, otherwise throw
 	  in a `set PC, start`
+	- consider adding special global symbols:
+		- __HEAP__ would point to the first word after the end of memory
 
 - C compiler
 
@@ -39,7 +43,7 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	SET A, data + 0x23
 
 - assembler directives:
-	.GLOBAL start
+	√ .GLOBAL start
 
 - entrypoints
 	- all equal SECTIONS get assembled next to each other

@@ -1,5 +1,7 @@
 
 # Comments can be hashes too.
+
+.GLOBAL start
 start:
 
 	; Calculate fib sequence.

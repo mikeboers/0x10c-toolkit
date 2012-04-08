@@ -48,6 +48,7 @@ class Assembler(object):
     
     def __init__(self):
         self.operations = []
+        self.global_names = set()
         self.global_symbols = []
         self.local_symbols = []
         self.symbol_references = []
@@ -168,7 +169,14 @@ class Assembler(object):
     
         if not line:
             return
-    
+        
+        m = re.match(r'\.(\w+)(.*)', line)
+        if m:
+            directive, args = m.groups()
+            if directive.lower() == 'global':
+                self.global_names.add(args.strip())
+            return
+                
         m = re.match(r'[a-zA-Z]{3}', line)
         if not m:
             raise SyntaxError('expected opname; got %r' % line)
@@ -200,7 +208,12 @@ class Assembler(object):
         for op in self.operations:
             
             if isinstance(op, Label):
-                self.local_symbols.append((str(op), len(raw_code)))
+                name = str(op)
+                if name in self.global_names:
+                    self.global_symbols.append((name, len(raw_code)))
+                else:
+                    self.local_symbols.append((name, len(raw_code)))
+                
             else:
                 raw_code.extend(op.to_code())
         
