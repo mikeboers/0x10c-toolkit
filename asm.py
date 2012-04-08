@@ -18,12 +18,50 @@ class Label(str):
         return ()
 
 
+custom_name_to_cls = {}
+def custom(cls):
+    custom_name_to_cls[cls.__name__[-3:]] = cls
+    return cls
+
+@custom
+class OpDAT(object):
+    
+    def __init__(self, *args):
+        self.data = []
+        for arg in args:
+            if isinstance(arg, values.Literal):
+                self.data.append(arg.value)
+            elif isinstance(arg, StringValue):
+                self.data.extend(ord(c) for c in arg.string)
+            else:
+                raise TypeError('DAT can only take Literal values')
+    
+    def to_code(self):
+        return self.data
+
+
+class StringValue(values.Base):
+    
+    def __init__(self, value):
+        self.string = value
+
+
 operations = []
 
 
 register_to_code = dict((x, i) for i, x in enumerate('ABCXYZIJ'))
 
-def get_value(line):
+
+def get_args(line):
+    args = []
+    while line:
+        value, line = get_arg(line)
+        args.append(value)
+        line = line.strip()
+    return args
+    
+    
+def get_arg(line):
     
     NUMBER = r'(?:0x[a-fA-F0-9 ]+|(?:0d)?[0-9 ]+|0o[0-7 ]+|0b[01 ]+)'
     def parse_number(raw):
@@ -95,7 +133,12 @@ def get_value(line):
     if m:
         return values.Label(m.group(1), indirect=True), line[m.end(0):]
     
-    return 'unknown', line
+    # Strings
+    m = match(r'"([^"]*)"', line)
+    if m:
+        return StringValue(m.group(1)), line[m.end(0):]
+    
+    raise ValueError('could not extract values from %r' % line)
 
 
 for line in infile:
@@ -122,22 +165,16 @@ for line in infile:
     
     if opname in ops.basic_name_to_cls:
         opcls = ops.basic_name_to_cls[opname]
-        a, line = get_value(line)
-        b, line = get_value(line)
-        
     elif opname in ops.nonbasic_name_to_cls:
         opcls = ops.nonbasic_name_to_cls[opname]
-        a, line = get_value(line)
-        b = None
-    
+    elif opname in custom_name_to_cls:
+        opcls = custom_name_to_cls[opname]
     else:
         raise ValueError('no operation %r' % opname)
     
-    if line:
-        print 'LINE NOT FULLY CONSUMED:', repr(line)
-    else:
-        op = opcls(a, b)
-        operations.append(op)
+    args = get_args(line)
+    op = opcls(*args)
+    operations.append(op)
 
 
 code = []

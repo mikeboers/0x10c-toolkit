@@ -28,5 +28,5 @@ exit:
 	; This should crash the emulator.
 	SET PC, exit
 
-
 data:
+	DAT 0, 0x1234, "Hello, world!", 0

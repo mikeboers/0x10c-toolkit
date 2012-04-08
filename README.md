@@ -30,12 +30,17 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 - direct/indirect labels
 - label offsets
+	[0x1 + data]
+	[data + I]
+
+- lowercase registers, operations, etc
 
 - assembly for inserting raw data
 	DAT "Hello!", 0
 	- assembler should scan for as many arguments as it can find instead of
 	  2 for basic and 1 for nonbasic, then we have can DAT or STR which takes
 	  as many as it wants
+	- see http://dwilliamson.github.com/
 
 - assembly for debugging
 	PRX (print hex)   addr, num
