@@ -88,7 +88,7 @@ class Linker(object):
                 out.append(' ')
             out.append('%04x' % x)
 
-        print ''.join(out)
+        return ''.join(out)
         
         
         

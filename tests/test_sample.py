@@ -3,7 +3,7 @@ from . import TestCase
 import values
 from cpu import CPU
 from asm import Assembler
-# from link import Linker
+from link import Linker
 
 class TestSample(TestCase):
     
