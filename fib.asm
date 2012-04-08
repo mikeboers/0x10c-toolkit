@@ -29,4 +29,4 @@ exit:
 	SET PC, exit
 
 data:
-	DAT 0, 0x1234, "Hello, world!", 0
+	DAT 0, 0x1234, "Hello", ',', ' ', "world!", 0

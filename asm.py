@@ -133,6 +133,11 @@ def get_arg(line):
     if m:
         return values.Label(m.group(1), indirect=True), line[m.end(0):]
     
+    # Character literals.
+    m = match(r"'([^'])'", line)
+    if m:
+        return values.Literal(ord(m.group(1))), line[m.end(0):]
+    
     # Strings
     m = match(r'"([^"]*)"', line)
     if m:

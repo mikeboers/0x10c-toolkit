@@ -5,17 +5,27 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 ## TODO
 
 - pull in examples from https://github.com/jtauber/DCPU-16-Examples
+- look for more TODOs http://dwilliamson.github.com/
 
 - disassembler script
 - emulator script
 	
 - assembler
 	- assemble into object files
-	- these will still be able to contain references to undefined symbols
-	- short labels
+	- do not resolve symbols; output them into comments in the object files
+		; Global-Symbols: start=0x0
+		; Local-Symbols: loop=0x1234
+		; Symbol-References: loop=0x1500
+	- how do deal with short labels?
+		It may not be all that important to deal with, as it only really
+		benifits jumps to the first 0x1f words of code.
 	
 - linker
-	- link assembled object files and resolve all symbols
+	- link assembled object files and resolve all labels/symbols
+		- add final symbol addr into the words that are placeholders for it,
+		  which will allow us to have positive offsets from them
+	- if an object has start at the beginning, put it first, otherwise throw
+	  in a `set PC, start`
 
 - C compiler
 
@@ -28,19 +38,24 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	- rename load/save to get/set
 	- save should take `unsigned short` value
 
-- direct/indirect labels
 - label offsets
-	[0x1 + data]
-	[data + I]
+	SET [0x1 + data], 0x20
+	SET A, data + 0x23
 
-- lowercase registers, operations, etc
+- assembler directives:
+	.GLOBAL start
 
-- assembly for inserting raw data
-	DAT "Hello!", 0
-	- assembler should scan for as many arguments as it can find instead of
-	  2 for basic and 1 for nonbasic, then we have can DAT or STR which takes
-	  as many as it wants
-	- see http://dwilliamson.github.com/
+- entrypoints
+	- all equal SECTIONS get assembled next to each other
+		.SECTION startup_function
+	- or a way to have a location in memory be a null terminated list of start of section addresses
+		startup_functions: DAT start_*, 0 (pattern matching labels)
+
+- nearly everything should be case insensitive
+	- labels
+	- registers
+	- operations
+	- watch out that string and character literals keep their case
 
 - assembly for debugging
 	PRX (print hex)   addr, num
