@@ -34,10 +34,6 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 - move modules into a package
 
-- values
-	- rename load/save to get/set
-	- save should take `unsigned short` value
-
 - label offsets
 	SET [0x1 + data], 0x20
 	SET A, data + 0x23
