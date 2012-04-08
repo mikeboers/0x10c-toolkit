@@ -26,7 +26,17 @@ cdef object OpIFB = ops.IFB
 cdef object OpJSR = ops.JSR
 
 
-
+DEF REG_A  = 0x0
+DEF REG_B  = 0x1
+DEF REG_C  = 0x2
+DEF REG_X  = 0x3
+DEF REG_Y  = 0x4
+DEF REG_Z  = 0x5
+DEF REG_I  = 0x6
+DEF REG_J  = 0x7
+DEF REG_SP = 0x8
+DEF REG_PC = 0x9
+DEF REG_O  = 0xA
 
 
 
@@ -36,11 +46,8 @@ cdef object OpJSR = ops.JSR
 cdef class CPU(object):
     
     def __init__(self):
-        self.PC = 0
-        self.SP = 0
-        self.O = 0
-        self.skip = False
-        
+        self.skip_next = False
+    
     def loads_hex(self, encoded, location=0):
         encoded = re.sub(r';.*$', '', encoded, 0, re.M) # strip comments
         encoded = re.sub(r'^.*:', '', encoded, 0, re.M) # strip addresses
@@ -63,8 +70,9 @@ cdef class CPU(object):
                 print
     
     cdef unsigned short get_next_word(self):
-        cdef unsigned short word = self.memory[self.PC]
-        self.PC += 1
+        cdef unsigned short PC = self.registers[REG_PC]
+        cdef unsigned short word = self.memory[PC]
+        self.registers[REG_PC] = PC + 1
         return word
     
     cdef values.Base get_op_value(self, unsigned short value):
@@ -89,11 +97,11 @@ cdef class CPU(object):
             return values.Stack(-1) # PUSH
         
         if value == 0x1b:
-            return values.Register('SP')
+            return values.Register(REG_SP)
         if value == 0x1c:
-            return values.Register('PC')
+            return values.Register(REG_PC)
         if value == 0x1d:
-            return values.Register('O')
+            return values.Register(REG_O)
     
         if value == 0x1e:
             return values.Indirect(self.get_next_word())
@@ -106,20 +114,20 @@ cdef class CPU(object):
         raise ValueError('unknown value 0x%04x' % value)
     
     def disassemble(self, location=None):
-        old_PC = self.PC
+        old_PC = self.registers[REG_PC]
         if location:
-            self.PC = location
+            self.registers[REG_PC] = location
         self._disassemble()
-        self.PC = old_PC
+        self.registers[REG_PC] = old_PC
     
     def _disassemble(self):
-        while self.memory[self.PC]:
+        while self.memory[self.registers[REG_PC]]:
             self._disassemble_one()
     
     def _disassemble_one(self):
-        start_PC = self.PC
+        start_PC = self.registers[REG_PC]
         cdef ops.Base op = self.get_next_instruction()        
-        end_PC = self.PC
+        end_PC = self.registers[REG_PC]
         dump = ' '.join('%04x' % x for x in self.memory[start_PC:end_PC])
         print '%-30r; %04x: %s' % (op, start_PC, dump)
     
@@ -179,8 +187,8 @@ cdef class CPU(object):
     def run(self, bint debug=False):
         cdef unsigned long counter = 0
         cdef int last_PC = -1
-        while self.memory[self.PC] and last_PC != self.PC:
-            last_PC = self.PC
+        while self.memory[self.registers[REG_PC]] and last_PC != self.registers[REG_PC]:
+            last_PC = self.registers[REG_PC]
             if debug:
                 if counter % 16 == 0:
                     if counter:
@@ -190,15 +198,15 @@ cdef class CPU(object):
             counter += 1
             if debug:
                 print '; %4x' % (counter - 1,),
-                print ' '.join(['%4x' % x for x in [self.PC, self.SP, self.O]]),
+                print ' '.join(['%4x' % x for x in [self.registers[REG_PC], self.registers[REG_SP], self.registers[REG_O]]]),
                 print ' '.join(['%4x' % self.registers[x] for x in xrange(8)])
             self.run_one()
         return counter
     
     cpdef run_one(self):
         cdef ops.Base op = self.get_next_instruction()
-        if self.skip:
-            self.skip = False
+        if self.skip_next:
+            self.skip_next = False
             return
         op.run(self)
         

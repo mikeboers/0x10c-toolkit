@@ -5,15 +5,11 @@ cimport ops
 
 cdef class CPU(object):
     
-    cdef unsigned short registers[8]
-    cdef unsigned short PC
-    cdef unsigned short SP
-    cdef unsigned short O
+    # The 8 general registers, then SP, PC, and O.
+    cdef unsigned short registers[11]
     cdef unsigned short memory[0x10000]
-    cdef bint skip
-
-    cdef unsigned long cycles
-
+    
+    cdef bint skip_next
 
     cpdef run_one(self)
     cdef unsigned short get_next_word(self)

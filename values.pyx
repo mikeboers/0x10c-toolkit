@@ -1,7 +1,30 @@
 from cpu cimport CPU
 
+DEF REG_A  = 0x0
+DEF REG_B  = 0x1
+DEF REG_C  = 0x2
+DEF REG_X  = 0x3
+DEF REG_Y  = 0x4
+DEF REG_Z  = 0x5
+DEF REG_I  = 0x6
+DEF REG_J  = 0x7
+DEF REG_SP = 0x8
+DEF REG_PC = 0x9
+DEF REG_O  = 0xA
 
-REGISTER_NAMES = 'ABCXYZIJ'
+REGISTER_NAMES = '''
+    A
+    B
+    C
+    X
+    Y
+    Z
+    I
+    J
+    SP
+    PC
+    O
+'''.strip().split()
 
 
 cdef class Base(object):
@@ -24,43 +47,30 @@ cdef class Base(object):
 
 cdef class Register(Base):
     
-    cdef object index
     cdef bint indirect
     cdef int offset
     
-    def __init__(self, index, indirect=False, offset=0):
-        self.index = index
+    def __init__(self, unsigned short index, indirect=False, offset=0):
+        self.value = index
         self.indirect = indirect
         self.offset = offset
     
     cdef unsigned short eval(self, CPU cpu):
-        if isinstance(self.index, basestring):
-            return getattr(cpu, self.index)
         if self.indirect or self.offset:
-            loc = cpu.registers[self.index] + (self.offset or 0)
+            loc = cpu.registers[self.value] + (self.offset or 0)
             return cpu.memory[loc]
         else:
-            return cpu.registers[self.index]
+            return cpu.registers[self.value]
     
     cdef void save(self, CPU cpu, unsigned short value):
-        if isinstance(self.index, basestring):
-            if self.index == 'PC':
-                cpu.PC = value
-            elif self.index == 'SP':
-                cpu.SP == value
-            else:
-                cpu.O == value
+        if self.indirect or self.offset:
+            loc = cpu.registers[self.value] + (self.offset or 0)
+            cpu.memory[loc] = value
         else:
-            if self.indirect or self.offset:
-                loc = cpu.registers[self.index] + (self.offset or 0)
-                cpu.memory[loc] = value
-            else:
-                cpu.registers[self.index] = value
+            cpu.registers[self.value] = value
     
     def __repr__(self):
-        if isinstance(self.index, basestring):
-            return self.index
-        out = REGISTER_NAMES[self.index]
+        out = REGISTER_NAMES[self.value]
         if self.offset:
             out = '0x%x + %s' % (self.offset, out)
         if self.offset or self.indirect:
@@ -68,9 +78,8 @@ cdef class Register(Base):
         return out
     
     def to_code(self):
-        if isinstance(self.index, basestring):
-            return dict(PC=0x1c, SP=0x1b, O=0x1d)[self.index], ()
-        
+        if self.value >= 0x8:
+            return self.value + 0x1b - 0x8, ()
         if self.offset:
             return 0x10 + self.index, (self.offset, )
         if self.indirect:
@@ -145,14 +154,14 @@ cdef class Stack(Base):
     
     cdef unsigned short eval(self, CPU cpu):
         if self.value < 0:
-            cpu.SP = (cpu.SP - 1) % 0x10000
-            return cpu.memory[cpu.SP]
+            cpu.registers[REG_SP] = (cpu.registers[REG_SP] - 1) % 0x10000
+            return cpu.memory[cpu.registers[REG_SP]]
         if self.value > 0:
-            val = cpu.memory[cpu.SP]
-            cpu.SP = (cpu.SP + 1) % 0x10000
+            val = cpu.memory[cpu.registers[REG_SP]]
+            cpu.registers[REG_SP] = (cpu.registers[REG_SP] + 1) % 0x10000
             return val
         else:
-            return cpu.memory[cpu.SP]
+            return cpu.memory[cpu.registers[REG_SP]]
     
     def to_code(self):
         if self.value < 0:
