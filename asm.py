@@ -65,7 +65,7 @@ def get_args(line):
     
 def get_arg(line):
     
-    NUMBER = r'(?:0x[a-fA-F0-9 ]+|(?:0d)?[0-9 ]+|0o[0-7 ]+|0b[01 ]+)'
+    NUMBER = r'(?:0x[a-f0-9 ]+|(?:0d)?[0-9 ]+|0o[0-7 ]+|0b[01 ]+)'
     def parse_number(raw):
         raw = re.sub(r'\s', '', raw).lower()
         if raw.startswith('0x'):
@@ -80,10 +80,10 @@ def get_arg(line):
     
     REGISTER = r'(?:[ABCXYZIJ]|PC|SP|O)'
     def parse_register(raw):
-        return register_to_code[raw]
+        return register_to_code[raw.upper()]
     
     def match(exp, line):
-        return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line)
+        return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line, re.I)
     
     # Literal values.
     m = match(r'(' + NUMBER + ')', line)
@@ -167,7 +167,7 @@ for line in infile:
     if not m:
         raise SyntaxError('expected opname; got %r' % line)
     
-    opname = m.group(0)
+    opname = m.group(0).upper()
     line = line[m.end(0):].strip()
     
     if opname in ops.basic_name_to_cls:

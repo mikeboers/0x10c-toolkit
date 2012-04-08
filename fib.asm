@@ -2,18 +2,18 @@
 start:
 
 	; Calculate fib sequence.
-	SET [0x1000], 1
+	set [0x1000], 1
 	SET [0x1001], 1
 
 
 	; A will point to N - 2
 	SET A, 0x1000
-	SET I, 0
+	SET i, 0
 
 loop:
 	; Increment, and exit after 10.
-	ADD I, 1
-	IFG I, 10
+	ADD i, 1
+	IFG i, 10
 		SET PC, exit
 	
 	; Calculate the new number
@@ -29,4 +29,4 @@ exit:
 	SET PC, exit
 
 data:
-	DAT 0, 0x1234, "Hello", ',', ' ', "world!", 0
+	DAT 0X00, 0x12 34, "Hello", ',', ' ', "world!", 0

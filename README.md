@@ -52,10 +52,10 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 		startup_functions: DAT start_*, 0 (pattern matching labels)
 
 - nearly everything should be case insensitive
-	- labels
-	- registers
-	- operations
-	- watch out that string and character literals keep their case
+	x labels
+	√ registers
+	√ operations
+	√ watch out that string and character literals keep their case
 
 - assembly for debugging
 	PRX (print hex)   addr, num
