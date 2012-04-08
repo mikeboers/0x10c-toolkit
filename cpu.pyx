@@ -200,6 +200,12 @@ cdef class CPU(object):
             self.skip_next = False
             return
         op.run(self)
+    
+    def __getitem__(self, name):
+        registers = 'A B C X Y Z I J SP PC O'.split()
+        if name in registers:
+            return self.registers[registers.index(name)]
+        return self.memory[name]
         
     
     

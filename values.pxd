@@ -5,5 +5,7 @@ cdef class Base(object):
     
     cdef public unsigned short value
     
-    cdef unsigned short get(self, CPU cpu)
-    cdef void set(self, CPU cpu, unsigned short value)
+    cpdef unsigned short get(self, CPU cpu)
+
+    # Non-void so it can be cpdef (for testing).
+    cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1

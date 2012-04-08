@@ -23,10 +23,10 @@ cdef class Base(object):
     def __init__(self, value):
         self.value = value
     
-    cdef unsigned short get(self, CPU cpu) except *:
+    cpdef unsigned short get(self, CPU cpu) except *:
         raise RuntimeError('cannot eval %r' % self)
 
-    cdef void set(self, CPU cpu, unsigned short value) except *:
+    cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1:
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
@@ -46,14 +46,14 @@ cdef class Register(Base):
         self.indirect = indirect
         self.offset = offset
     
-    cdef unsigned short get(self, CPU cpu):
+    cpdef unsigned short get(self, CPU cpu):
         if self.indirect or self.offset:
             loc = cpu.registers[self.value] + (self.offset or 0)
             return cpu.memory[loc]
         else:
             return cpu.registers[self.value]
     
-    cdef void set(self, CPU cpu, unsigned short value):
+    cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1:
         if self.indirect or self.offset:
             loc = cpu.registers[self.value] + (self.offset or 0)
             cpu.memory[loc] = value
@@ -80,7 +80,7 @@ cdef class Register(Base):
 
 cdef class Literal(Base):
 
-    cdef unsigned short get(self, CPU cpu):
+    cpdef unsigned short get(self, CPU cpu):
         return self.value
     
     def __repr__(self):
@@ -94,13 +94,13 @@ cdef class Literal(Base):
 
 cdef class Indirect(Base):
 
-    cdef unsigned short get(self, CPU cpu):
+    cpdef unsigned short get(self, CPU cpu):
         return cpu.memory[self.value]
         
     def __repr__(self):
         return '[0x%x]' % self.value
         
-    cdef void set(self, CPU cpu, unsigned short value):
+    cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1:
         cpu.memory[self.value] = value
     
     def to_code(self):
@@ -143,7 +143,7 @@ cdef class Stack(Base):
             return 'POP'
         return 'PEEK'
     
-    cdef unsigned short get(self, CPU cpu):
+    cpdef unsigned short get(self, CPU cpu):
         if self.value < 0:
             cpu.registers[REG_SP] = (cpu.registers[REG_SP] - 1) % 0x10000
             return cpu.memory[cpu.registers[REG_SP]]
