@@ -26,8 +26,9 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	√ link assembled object files and resolve all labels/symbols
 		- add final symbol addr into the words that are placeholders for it,
 		  which will allow us to have positive offsets from them
-	- if an object has start at the beginning, put it first, otherwise throw
-	  in a `set PC, start`
+	x if an object has start at the beginning, put it first, otherwise throw
+	  in a `set PC, start`. Not going to do this as one can easily add a stub
+	  file as the first argument to the linker which contains: `set PC, start`
 	- consider adding special global symbols:
 		- __HEAP__ would point to the first word after the end of memory
 
@@ -62,6 +63,8 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	PRC (print chars) addr, num
 	PRS (print string), addr
 	PRD (print decimal)
+	BRK
+		kill the emulator
 	
 - cycle costs
 

@@ -10,24 +10,38 @@ class TestLinker(TestCase):
     
     def test_symbols_across_files(self):
         
-        self.assertEqualHex(self.assemble_and_link(
-            '''
-            set A, data
+        a = '''
+        
+        start:
+            set A, [data]
             jsr func
+        exit:
+            set PC, exit
+        
+        '''
+        b = '''
             
-            ''', '''
-            
-            .GLOBAL func
-            func:
-                mul A, 2
-                set PC, POP
+        .GLOBAL func
+        func:
+            add A, A
+            set PC, POP
                 
-            .GLOBAL data
-            data: DAT 0x1234
+        .GLOBAL data
+        data:
+            DAT 0x1234
             
-            '''
-        ), '''
-            0000: 7c01 0006 7c10 0004 8804 61c1 1234
-           '''
-        )
+        '''
+        
+        hex = self.assemble_and_link(a, b)
+        self.assertEqualHex(hex, '''
+            0000: 7801 0008 7c10 0006 7dc1 0004 0002 61c1
+            0008: 1234
+        ''')
+        
+        cpu = CPU()
+        cpu.loads(hex)
+        cpu.run()
+        
+        self.assertEqual(cpu['A'], 0x1234 * 2)
+        
         
