@@ -1,4 +1,5 @@
 
+# Comments can be hashes too.
 start:
 
 	; Calculate fib sequence.
