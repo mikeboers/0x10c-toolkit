@@ -27,8 +27,10 @@ class TestLiterals(TestCase):
     def test_set(self):
         cpu = CPU()
         v = values.Literal(0x0)
-        with self.assertRaises(TypeError):
-            v.set(cpu, 0x1)
+        v.set(cpu, 0x1)
+        
+        # It doesn't set, because you CANT set literals; it fails silently.
+        self.assertEqual(v.get(cpu), 0)
 
 
 class TestRegisters(TestCase):

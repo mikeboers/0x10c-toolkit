@@ -40,13 +40,25 @@ start:
 	set X, [blocks + 2]
 	jsr free
 	
+	set X, 10
+	jsr malloc
+	set I, 0
+	set J, 10
+set_loop:
+	set [A], I
+	add A, 1
+	add I, 1
+	ifg J, I
+		set PC, set_loop
 
-	
+	set X, 1
+	jsr malloc
+	set [A], 0x9999
 	
 	
 	set PC, exit
 	
-blocks: dat 0, 0, 0
+
 
 
 ; malloc takes number of words in X, and returns pointer to start on A.
@@ -189,7 +201,7 @@ sum_block_loop:
 
 
 
-
+blocks: dat 0, 0, 0
 
 exit:
 	dat 0

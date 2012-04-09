@@ -92,6 +92,11 @@ cdef class Literal(Base):
     def __repr__(self):
         return '0x%x' % self.value
     
+    cpdef unsigned char set(self, CPU cpu, unsigned short value):
+        # Silent failure.
+        pass
+    
+    
     def to_code(self):
         if self.value <= 0x1f:
             return 0x20 + self.value, ()
