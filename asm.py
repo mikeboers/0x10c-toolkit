@@ -79,10 +79,13 @@ class Assembler(object):
     
         REGISTER = r'(?:[ABCXYZIJ]|PC|SP|O)'
         def parse_register(raw):
-            return register_to_code[raw.upper()]
+            try:
+                return register_to_code[raw.upper()]
+            except KeyError:
+                raise ValueError('not a register: %r' % raw)
     
-        def match(exp, line):
-            return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line, re.I)
+        def match(exp, line, flags=0):
+            return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line, re.I | flags)
     
         # Literal values.
         m = match(r'(' + NUMBER + ')', line)
@@ -99,40 +102,39 @@ class Assembler(object):
         if m:
             return values.Register(parse_register(m.group(1))), line[m.end(0):]
     
-        # Indirect register.
-        m = match(r'\[\s*(' + REGISTER + ')\s*\]', line)
+        # Indirect (and offset) register.
+        m = match(r'\[\s*' +
+                  r'(?:(' + NUMBER + ')\s*\+\s*)?' +
+                  r'(' + REGISTER + ')' +
+                  r'(?:\s*\+\s*(' + NUMBER + '))?\s*\]', line)
         if m:
-            return values.Register(parse_register(m.group(1)), indirect=True), line[m.end(0):]
-    
-        # Offset register.
-        m = match(r'\[\s*(' + NUMBER + ')\s*\+\s*(' + REGISTER + ')\s*\]', line)
-        if m:
-            return values.Register(
-                parse_register(m.group(2)),
-                indirect=True,
-                offset=parse_number(m.group(1)),
-            ), line[m.end(0):]
-        m = match(r'\[\s*(' + REGISTER + ')\s*\+\s*(' + NUMBER + ')\s*\]', line)
-        if m:
-            return values.Register(
-                parse_register(m.group(1)),
-                indirect=True,
-                offset=parse_number(m.group(2)),
-            ), line[m.end(0):]
-
+            pre, reg, post = m.groups()
+            offset = parse_number(pre or '0') + parse_number(post or '0')
+            return values.Register(parse_register(reg), indirect=True, offset=offset), line[m.end(0):]
     
         # Stack values.
         m = match(r'(POP|PEEK|PUSH)', line)
         if m:
             return values.Stack(dict(POP=0, PEEK=1, PUSH=2)[m.group(1)]), line[m.end(0):]
-    
-        # Labels
-        m = match(r'(\w{3,})', line)
+            
+        # Basic (and offset) labels.
+        m = match(r'(?:(' + NUMBER + ')\s*\+\s*)?' +
+                  r'(\w+)' +
+                  r'(?:\s*\+\s*(' + NUMBER + '))?', line)
         if m:
-            return values.Label(m.group(1)), line[m.end(0):]
-        m = match(r'\[\s*(\w{3,})\s*\]', line)
+            pre, label, post = m.groups()
+            offset = parse_number(pre or '0') + parse_number(post or '0')
+            return values.Label(label, indirect=False, offset=offset), line[m.end(0):]
+        
+        # Indirect (and offset) labels.
+        m = match(r'\[\s*' +
+                  r'(?:(' + NUMBER + ')\s*\+\s*)?' +
+                  r'(\w+)' +
+                  r'(?:\s*\+\s*(' + NUMBER + '))?\s*\]', line)
         if m:
-            return values.Label(m.group(1), indirect=True), line[m.end(0):]
+            pre, label, post = m.groups()
+            offset = parse_number(pre or '0') + parse_number(post or '0')
+            return values.Label(label, indirect=True, offset=offset), line[m.end(0):]
     
         # Character literals.
         m = match(r"('[^']*?')", line)
@@ -224,6 +226,7 @@ class Assembler(object):
         code = []
         for x in raw_code:
             if isinstance(x, values.Label):
+                print 'LABEL', x
                 self.symbol_references.append((x.label, len(code)))
                 code.append(x.offset)
             elif isinstance(x, int):

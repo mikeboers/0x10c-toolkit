@@ -9,21 +9,15 @@ from link import Linker
 class TestASM(TestCase):
     
     def test_literal_bases(self):
-        self.assertEqualHex(self.assemble_and_link('''
-            set A, 2000
-            set B, 0d2001
-            set C, 0x2002
-            set X, 0o3000
-            set Y, 0b1111111
+        self.assertEqualHex(self.assemble('''
+            dat 2000, 0d2001, 0x2002, 0o3000, 0b1111111
         '''),
         '''
-            ; Manually verified with the disassembler.
-            0000: 7c01 07d0 7c11 07d1 7c21 2002 7c31 0600
-            0008: 7c41 007f
+            0000: 07d0 07d1 2002 0600 007f
         ''')
         
     def test_op_case(self):
-        self.assertEqualHex(self.assemble_and_link('''
+        self.assertEqualHex(self.assemble('''
             SET A, 0
             set B, 1
             set c, 2
@@ -54,7 +48,7 @@ class TestASM(TestCase):
         ''')
     
     def test_string_case(self):
-        self.assertEqualHex(self.assemble_and_link('''
+        self.assertEqualHex(self.assemble('''
             dat "hello", 0
             dat "HELLO", 0
             dat 'a', 'A', 0
@@ -77,5 +71,28 @@ class TestASM(TestCase):
             0000: 0009 0062 0065 0066 006f 0072 0065 0000
             0008: 0061 0066 0074 0065 0072 000d 000a
         ''')
+    
+    def test_register_offset_flexibility(self):
+        self.assertEqualHex(self.assemble('''
+            set [A + 0], [B + 1]
+        '''), self.assemble('''
+            set [0 + A], [1 + B]
+        '''))
+    
+    def test_label_offsets(self):
+        self.assertEqualHex(self.assemble_and_link('''
+            set A, data
+            set B, data + 1
+            set C, 2 + data
+            set X, [data]
+            set Y, [data + 1]
+            set Z, [2 + data]
+            dat 0
+            data: dat 0x1234, 0x5678, 0x9abc
+        '''), '''
+            0000: 7c01 000d 7c11 000e 7c21 000f 7831 000d
+            0008: 7841 000e 7851 000f 0000 1234 5678 9abc
+        ''')
+        
         
         

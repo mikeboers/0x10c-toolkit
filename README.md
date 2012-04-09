@@ -59,9 +59,6 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 - assembler directives:
 	√ .GLOBAL start
 
-- character literals should be able to have escapes: '\n'
-	- use ast.literal_eval on these and strings
-
 - entrypoints
 	- all equal SECTIONS get assembled next to each other
 		.SECTION startup_function

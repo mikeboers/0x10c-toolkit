@@ -116,8 +116,7 @@ cdef class Label(Base):
     def __init__(self, label, indirect=False, offset=0):
         self.label = label
         self.indirect = indirect
-        self.offset = 0
-        self.value = 0
+        self.offset = offset
     
     def __repr__(self):
         out = self.label
