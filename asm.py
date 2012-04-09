@@ -1,9 +1,9 @@
 import sys
 import re
+import ast
 
 import ops
 import values
-
 
 
 
@@ -135,14 +135,18 @@ class Assembler(object):
             return values.Label(m.group(1), indirect=True), line[m.end(0):]
     
         # Character literals.
-        m = match(r"'([^'])'", line)
+        m = match(r"('[^']*?')", line)
         if m:
-            return values.Literal(ord(m.group(1))), line[m.end(0):]
+            value = ast.literal_eval(m.group(1))
+            if len(value) != 1:
+                raise ValueError('character literal not of length 1: %r' % value)
+            return values.Literal(ord(value)), line[m.end(0):]
     
         # Strings
-        m = match(r'"([^"]*)"', line)
+        m = match(r'("[^"]*?")', line)
         if m:
-            return StringValue(m.group(1)), line[m.end(0):]
+            value = ast.literal_eval(m.group(1))
+            return StringValue(value), line[m.end(0):]
     
         raise ValueError('could not extract values from %r' % line)
 

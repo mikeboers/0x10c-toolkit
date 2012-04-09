@@ -62,4 +62,20 @@ class TestASM(TestCase):
             0000: 0068 0065 006c 006c 006f 0000 0048 0045
             0008: 004c 004c 004f 0000 0061 0041 0000
         ''')
+    
+    def test_character_escapes(self):
+        self.assertEqualHex(self.assemble(r'''
+            dat '\0', '\n', '\t', '\r', ' '
+        '''), '''
+            0000: 0000 000a 0009 000d 0020
+        ''')
+    
+    def test_string_escapes(self):
+        self.assertEqualHex(self.assemble(r'''
+            dat "\tbefore\0after\r\n"
+        '''), '''
+            0000: 0009 0062 0065 0066 006f 0072 0065 0000
+            0008: 0061 0066 0074 0065 0072 000d 000a
+        ''')
+        
         
