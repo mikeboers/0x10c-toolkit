@@ -18,6 +18,9 @@ if __name__ == '__main__':
     cpu = CPU()
     cpu.loads(infile.read())
 
+    cpu.disassemble()
+    print
+    
     start = time.time()
     steps = cpu.run(debug=True)
     print '%d Hz' % (steps / (time.time() - start))

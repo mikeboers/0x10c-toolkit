@@ -11,6 +11,28 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 √ running script
 √ assembling script
 √ linking script
+
+- incorperate normal assembler syntax
+	- appears to be intel/MASM/NASM syntax
+	- see:
+		- http://en.wikipedia.org/wiki/X86_assembly_language#Syntax
+		- http://en.wikibooks.org/wiki/X86_Assembly/FASM_Syntax
+	
+	- FASM:
+		- anonymous labels (@@, @f, @b)
+		- global vs local labels (starting with period)
+			global:
+			.local:
+		
+			can reference like "global.local"
+		- macro <name> <parameters> { code }
+			
+	- NASM:
+		- %define newline 0xA
+		- %define func(a, b) ((a) * (b) + 2)
+	
+	- GAS:
+		- comments can start with any of #!;@|
 	
 - assembler
 	√ assemble into object files

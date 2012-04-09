@@ -41,11 +41,9 @@ cdef class NonBasic(Base):
         opcode = nonbasic_cls_to_code[self.__class__]
         a, a_extra = self.a.to_code()
         return (((opcode & 0x3f) << 4) + ((a & 0x3f) << 10) ,) + a_extra
-        
 
 
 cdef class SET(Basic):
-    
     cdef run(self, CPU cpu):
         self.a.set(cpu, self.b.get(cpu))
 
