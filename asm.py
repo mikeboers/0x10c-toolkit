@@ -27,6 +27,8 @@ class OpDAT(object):
                 self.data.append(arg.value)
             elif isinstance(arg, StringValue):
                 self.data.extend(ord(c) for c in arg.string)
+            elif isinstance(arg, values.Label):
+                self.data.append(arg)
             else:
                 raise TypeError('DAT can only take Literal values')
     
