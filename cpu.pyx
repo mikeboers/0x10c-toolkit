@@ -81,11 +81,11 @@ cdef class CPU(object):
             return values.Register(value - 0x10, indirect=True, offset=self.get_next_word())
     
         if value == 0x18:
-            return values.Stack(1) # POP
+            return values.Stack(STACK_POP)
         if value == 0x19:
-            return values.Stack(0) # PEEK
+            return values.Stack(STACK_PEEK)
         if value == 0x1a:
-            return values.Stack(-1) # PUSH
+            return values.Stack(STACK_PUSH)
         
         if value == 0x1b:
             return values.Register(REG_SP)

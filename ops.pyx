@@ -52,47 +52,67 @@ cdef class SET(Basic):
 
 cdef class ADD(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cdef unsigned int sum = aval + bval
-        cpu.registers[REG_O] = 1 if sum > 0xffff else 0
-        self.a.set(cpu, sum & 0xffff)
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cdef unsigned int out = a + b
+        self.a.set(cpu, out & 0xffff)
+        cpu.registers[REG_O] = 1 if out > 0xffff else 0
 
 
 cdef class SUB(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.registers[REG_O] = 0xffff if bval > aval else 0
-        self.a.set(cpu, (aval - bval) & 0xffff)
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        self.a.set(cpu, (a - b) & 0xffff)
+        cpu.registers[REG_O] = 0xffff if b > a else 0
     
     
 cdef class MUL(Basic):
-    pass
+    cdef run(self, CPU cpu):
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cdef unsigned int out = a * b
+        self.a.set(cpu, out & 0xffff)
+        cpu.registers[REG_O] = (out >> 16) & 0xffff
     
     
 cdef class DIV(Basic):
-    pass
+    cdef run(self, CPU cpu):
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        if not b:
+            self.a.set(cpu, 0)
+            cpu.registers[REG_O] = 0
+        else:
+            self.a.set(cpu, a / b)
+            cpu.registers[REG_O] = ((a << 16) / b) & 0xffff
+            
     
     
 cdef class MOD(Basic):
-    pass
+    cdef run(self, CPU cpu):
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        if not b:
+            self.a.set(cpu, 0)
+        else:
+            self.a.set(cpu, a % b)
     
     
 cdef class SHL(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.registers[REG_O] = ((aval << bval) >> 16 ) & 0xffff
-        self.a.set(cpu, (aval << bval) & 0xffff)
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cpu.registers[REG_O] = ((a << b) >> 16 ) & 0xffff
+        self.a.set(cpu, (a << b) & 0xffff)
         
         
 cdef class SHR(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.registers[REG_O] = ((aval << 16) >> bval) & 0xffff
-        self.a.set(cpu, aval >> bval)
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cpu.registers[REG_O] = ((a << 16) >> b) & 0xffff
+        self.a.set(cpu, a >> b)
         
         
 cdef class AND(Basic):
@@ -112,38 +132,38 @@ cdef class XOR(Basic):
         
 cdef class IFE(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.skip_next = aval != bval
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cpu.skip_next = a != b
         
         
 cdef class IFN(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.skip_next = aval == bval
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cpu.skip_next = a == b
         
         
 cdef class IFG(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.skip_next = aval <= bval
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cpu.skip_next = a <= b
         
         
 cdef class IFB(Basic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
-        cdef unsigned short bval = self.b.get(cpu)
-        cpu.skip_next = not (aval & bval)
+        cdef unsigned short a = self.a.get(cpu)
+        cdef unsigned short b = self.b.get(cpu)
+        cpu.skip_next = not (a & b)
 
 
 cdef class JSR(NonBasic):
     cdef run(self, CPU cpu):
-        cdef unsigned short aval = self.a.get(cpu)
+        cdef unsigned short a = self.a.get(cpu)
         cpu.registers[REG_SP] = cpu.registers[REG_SP] - 1
         cpu.memory[cpu.registers[REG_SP]] = cpu.registers[REG_PC]
-        cpu.registers[REG_PC] = aval
+        cpu.registers[REG_PC] = a
 
 
 

@@ -31,6 +31,8 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	  file as the first argument to the linker which contains: `set PC, start`
 	- consider adding special global symbols:
 		- __HEAP__ would point to the first word after the end of memory
+		- __KEYBOARD__ to the keyboard buffer
+		- __VIDEO__ to the video screen
 
 - C compiler
 
@@ -43,8 +45,22 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	SET [0x1 + data], 0x20
 	SET A, data + 0x23
 
+- more forgiving regsiter offsets:
+	[A + 1] or [1 + A]
+
+- start utils module
+	- hex stream normalizer
+	- comment stripping normalizer
+	- value parsing?
+
+- convert scripts into setuptools entrypoints
+
+
 - assembler directives:
 	√ .GLOBAL start
+
+- character literals should be able to have escapes: '\n'
+	- use ast.literal_eval on these and strings
 
 - entrypoints
 	- all equal SECTIONS get assembled next to each other
@@ -52,19 +68,15 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	- or a way to have a location in memory be a null terminated list of start of section addresses
 		startup_functions: DAT start_*, 0 (pattern matching labels)
 
-- nearly everything should be case insensitive
-	x labels
-	√ registers
-	√ operations
-	√ watch out that string and character literals keep their case
-
 - assembly for debugging
 	PRX (print hex)   addr, num
 	PRC (print chars) addr, num
 	PRS (print string), addr
 	PRD (print decimal)
 	BRK
-		kill the emulator
+		kill the emulator; could just be a `DAT 0`
+	
+	put these all the end of the reserved special opcode space
 	
 - cycle costs
 

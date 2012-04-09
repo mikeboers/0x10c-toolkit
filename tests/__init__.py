@@ -21,9 +21,6 @@ class TestCase(unittest.TestCase):
         linker.link()
         return linker.dumps()
     
-    def assert_asm_and_link(self, asm, hex):
-        pass
-    
     def normalize_hex(self, source):
         cleaned = []
         
@@ -50,6 +47,13 @@ class TestCase(unittest.TestCase):
         
         return ''.join(out)
         
-        
     def assertEqualHex(self, one, two, *args):
         self.assertEqual(self.normalize_hex(one), self.normalize_hex(two), *args)
+    
+    def assemble_and_run(self, *args):
+        hex = self.assemble_and_link(*args)
+        cpu = CPU()
+        cpu.loads(hex)
+        cpu.run()
+        return cpu
+    

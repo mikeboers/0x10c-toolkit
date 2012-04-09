@@ -137,17 +137,18 @@ cdef class Label(Base):
 cdef class Stack(Base):
 
     def __repr__(self):
-        if self.value < 0:
+        if self.value == STACK_PUSH:
             return 'PUSH'
-        if self.value > 0:
+        elif self.value == STACK_POP:
             return 'POP'
-        return 'PEEK'
+        else:
+            return 'PEEK'
     
     cpdef unsigned short get(self, CPU cpu):
-        if self.value < 0:
+        if self.value == STACK_PUSH:
             cpu.registers[REG_SP] = (cpu.registers[REG_SP] - 1) % 0x10000
             return cpu.memory[cpu.registers[REG_SP]]
-        if self.value > 0:
+        elif self.value == STACK_POP:
             val = cpu.memory[cpu.registers[REG_SP]]
             cpu.registers[REG_SP] = (cpu.registers[REG_SP] + 1) % 0x10000
             return val
@@ -155,8 +156,9 @@ cdef class Stack(Base):
             return cpu.memory[cpu.registers[REG_SP]]
     
     def to_code(self):
-        if self.value < 0:
-            return 0x1a, ()
-        if self.value > 0:
+        if self.value == STACK_POP:
             return 0x18, ()
-        return 0x19, ()
+        elif self.value == STACK_PEEK:
+            return 0x19, ()
+        else:
+            return 0x1a, ()

@@ -124,7 +124,7 @@ class Assembler(object):
         # Stack values.
         m = match(r'(POP|PEEK|PUSH)', line)
         if m:
-            return values.Stack(dict(POP=1, PEEK=0, PUSH=-1)[m.group(1)]), line[m.end(0):]
+            return values.Stack(dict(POP=0, PEEK=1, PUSH=2)[m.group(1)]), line[m.end(0):]
     
         # Labels
         m = match(r'(\w{3,})', line)
