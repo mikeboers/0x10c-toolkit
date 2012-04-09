@@ -44,7 +44,9 @@ class Linker(object):
             for name, value in obj.global_symbols:
                 self.global_symbols[name] = offset + value
             offset += len(obj.code)
-            
+        
+        self.global_symbols['HEAP'] = offset
+        
         # Resolve all symbols
         symbols = {}
         missing = []
