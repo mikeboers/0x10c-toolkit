@@ -92,25 +92,53 @@ class Assembler(object):
         if m:
             return values.Literal(parse_number(m.group(1))), line[m.end(0):]
     
-        # Indirect values.
-        m = match(r'\[\s*(' + NUMBER + ')\s*\]', line)
-        if m:
-            return values.Indirect(parse_number(m.group(1))), line[m.end(0):]
-    
         # Basic registers.
         m = match(r'(' + REGISTER + ')', line)
         if m:
             return values.Register(parse_register(m.group(1))), line[m.end(0):]
     
-        # Indirect (and offset) register.
-        m = match(r'\[\s*' +
-                  r'(?:(' + NUMBER + ')\s*\+\s*)?' +
-                  r'(' + REGISTER + ')' +
-                  r'(?:\s*\+\s*(' + NUMBER + '))?\s*\]', line)
+        # Indirect registers and labels with offsets.
+        m = match(r'\[([^\]]+)\]', line)
         if m:
-            pre, reg, post = m.groups()
-            offset = parse_number(pre or '0') + parse_number(post or '0')
-            return values.Register(parse_register(reg), indirect=True, offset=offset), line[m.end(0):]
+            
+            reg = None
+            label = None
+            offset = 0
+            
+            for chunk in m.group(1).split('+'):
+                chunk = chunk.strip()
+                
+                try:
+                    offset += parse_number(chunk)
+                except ValueError:
+                    pass
+                else:
+                    continue
+                
+                try:
+                    new_reg = parse_register(chunk)
+                except ValueError:
+                    pass
+                else:
+                    if reg:
+                        raise ValueError('cannot have two registers in indirect value')
+                    reg = new_reg
+                    continue
+                
+                if not re.match(r'^\w+$', chunk):
+                    raise ValueError('cannot identity chunk in indirect value: %r' % chunk)
+                if label:
+                    raise ValueError('cannot have two labels in indirect value')
+                label = chunk
+            
+            # print 'reg', reg, 'label', repr(label), 'offset', offset
+            
+            if reg is not None:
+                return values.Register(reg, indirect=True, offset=offset, label=label), line[m.end(0):]
+            elif label:
+                return values.Label(label, indirect=True, offset=offset), line[m.end(0):]
+            else:
+                return values.Indirect(offset), line[m.end(0):]
     
         # Stack values.
         m = match(r'(POP|PEEK|PUSH)', line)
@@ -125,16 +153,6 @@ class Assembler(object):
             pre, label, post = m.groups()
             offset = parse_number(pre or '0') + parse_number(post or '0')
             return values.Label(label, indirect=False, offset=offset), line[m.end(0):]
-        
-        # Indirect (and offset) labels.
-        m = match(r'\[\s*' +
-                  r'(?:(' + NUMBER + ')\s*\+\s*)?' +
-                  r'(\w+)' +
-                  r'(?:\s*\+\s*(' + NUMBER + '))?\s*\]', line)
-        if m:
-            pre, label, post = m.groups()
-            offset = parse_number(pre or '0') + parse_number(post or '0')
-            return values.Label(label, indirect=True, offset=offset), line[m.end(0):]
     
         # Character literals.
         m = match(r"('[^']*?')", line)
@@ -226,7 +244,6 @@ class Assembler(object):
         code = []
         for x in raw_code:
             if isinstance(x, values.Label):
-                print 'LABEL', x
                 self.symbol_references.append((x.label, len(code)))
                 code.append(x.offset)
             elif isinstance(x, int):

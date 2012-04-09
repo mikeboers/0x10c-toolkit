@@ -29,6 +29,15 @@ class TestLiterals(TestCase):
         v = values.Literal(0x0)
         with self.assertRaises(TypeError):
             v.set(cpu, 0x1)
+
+
+class TestRegisters(TestCase):
     
+    def test_labels(self):
+        reg = values.Register(0, offset=10, label='data')
+        self.assertEqual(repr(reg), '[data + 0xa + A]')
+        self.assertEqual(reg.to_code(), (16, (values.Label('data', offset=10),)))
+        self.assertNotEqual(reg.to_code(), (16, (values.Label('data', offset=11),)))
+        self.assertNotEqual(reg.to_code(), (16, (values.Label('other', offset=10),)))
         
         

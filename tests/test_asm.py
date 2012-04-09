@@ -79,20 +79,21 @@ class TestASM(TestCase):
             set [0 + A], [1 + B]
         '''))
     
-    def test_label_offsets(self):
-        self.assertEqualHex(self.assemble_and_link('''
-            set A, data
-            set B, data + 1
-            set C, 2 + data
-            set X, [data]
-            set Y, [data + 1]
-            set Z, [2 + data]
-            dat 0
-            data: dat 0x1234, 0x5678, 0x9abc
-        '''), '''
-            0000: 7c01 000d 7c11 000e 7c21 000f 7831 000d
-            0008: 7841 000e 7851 000f 0000 1234 5678 9abc
-        ''')
+    def test_multiple_offsets(self):
+        self.assertEqualHex(self.assemble('''
+            set [A + 1 + 10], [0x10 + B + 1]
+        '''), self.assemble('''
+            set [11 + A], [17 + B]
+        '''))
+    
+    def test_register_labels(self):
+        self.assertEqualHex(self.assemble('''
+            start: set [A + 1 + 10 + start], [0x10 + B + 1]
+        '''), self.assemble('''
+            set [11 + A], [17 + B]
+        '''))
+        
+        
         
         
         

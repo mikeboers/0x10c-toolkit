@@ -41,12 +41,21 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 - move modules into a package
 
-- label offsets
-	SET [0x1 + data], 0x20
-	SET A, data + 0x23
+- consider adding label offsets to registers: [A + data]
+	This would be handy if we are iterating across some words located at `data`.
+	Would be handy if we could swap out nearly any number for a label.
 
-- more forgiving regsiter offsets:
-	[A + 1] or [1 + A]
+√ abstract offsets to a sequence of numbers, labels, and registers, where you
+  can have upto 1 register and up to 1 label, and everything else is determined at link time
+  	- no really special treatment needed from the linker: symbols are added on
+	  top of hard-coded offsets
+	- all cases:
+		√ [A + label]
+		√ [A + label + 1]
+		√ [label]
+		√ [label + 1]
+		√ label
+		√ label + 1
 
 - start utils module
 	- hex stream normalizer

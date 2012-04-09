@@ -43,5 +43,21 @@ class TestLinker(TestCase):
         cpu.run()
         
         self.assertEqual(cpu['A'], 0x1234 * 2)
+    
+    def test_label_offsets(self):
+        self.assertEqualHex(self.assemble_and_link('''
+            set A, data
+            set B, data + 1
+            set C, 2 + data
+            set X, [data]
+            set Y, [data + 1]
+            set Z, [2 + data]
+            dat 0
+            data: dat 0x1234, 0x5678, 0x9abc
+        '''), '''
+            0000: 7c01 000d 7c11 000e 7c21 000f 7831 000d
+            0008: 7841 000e 7851 000f 0000 1234 5678 9abc
+        ''')
+    
         
         

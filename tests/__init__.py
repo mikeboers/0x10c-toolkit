@@ -56,4 +56,10 @@ class TestCase(unittest.TestCase):
         cpu.loads(hex)
         cpu.run()
         return cpu
+
+
+
+
+
+
     

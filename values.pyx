@@ -40,11 +40,13 @@ cdef class Register(Base):
     
     cdef bint indirect
     cdef int offset
+    cdef object label
     
-    def __init__(self, unsigned short index, indirect=False, offset=0):
+    def __init__(self, unsigned short index, indirect=False, offset=0, label=None):
         self.value = index
         self.indirect = indirect
         self.offset = offset
+        self.label = label
     
     cpdef unsigned short get(self, CPU cpu):
         if self.indirect or self.offset:
@@ -64,13 +66,17 @@ cdef class Register(Base):
         out = REGISTER_NAMES[self.value]
         if self.offset:
             out = '0x%x + %s' % (self.offset, out)
-        if self.offset or self.indirect:
+        if self.label:
+            out = '%s + %s' % (self.label, out)
+        if self.offset or self.label or self.indirect:
             out = '[%s]' % out
         return out
     
     def to_code(self):
         if self.value >= 0x8:
             return self.value + 0x1b - 0x8, ()
+        if self.label:
+            return 0x10 + self.value, (Label(self.label, offset=self.offset),)
         if self.offset:
             return 0x10 + self.value, (self.offset, )
         if self.indirect:
@@ -131,6 +137,16 @@ cdef class Label(Base):
             return 0x1e, (self, )
         else:
             return 0x1f, (self, )
+    
+    def __richcmp__(self, other, op):
+        if op == 3:
+            return not self.__richcmp__(other, 2)
+        elif op == 2:
+            if not isinstance(other, Label):
+                return False
+            return self.label == other.label and self.offset == other.offset
+        else:
+            return False
 
 
 cdef class Stack(Base):
