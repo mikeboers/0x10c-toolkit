@@ -6,6 +6,7 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 - pull in examples from https://github.com/jtauber/DCPU-16-Examples
 - look for more TODOs http://dwilliamson.github.com/
+- https://github.com/noname22/dtools/
 
 √ disassembler script
 √ running script
@@ -79,6 +80,10 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 		√ label
 		√ label + 1
 
+- be able to have negative labels and offsets, in addition to multiple labels
+	set A, two - one
+	- negative offsets are taken %2^16
+
 - start utils module
 	- hex stream normalizer
 	- comment stripping normalizer
@@ -86,6 +91,9 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 
 - convert scripts into setuptools entrypoints
 
+- alloc.asm has a bug: unallocated blocks of length 0 encode to 0, which flags
+  the start of fresh heap. Headers should track the length to the next header
+  (what it does now, but +1).
 
 - assembler directives:
 	√ .GLOBAL start

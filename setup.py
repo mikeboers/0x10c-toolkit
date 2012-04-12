@@ -9,5 +9,10 @@ setup(
         Extension("cpu", ["cpu.pyx"]),
         Extension("values", ["values.pyx"]),
         Extension("ops", ["ops.pyx"]),
-    ]
+    ],
+    
+    install_requires = '''
+        cython
+        pyopengl
+    ''',
 )

@@ -198,14 +198,22 @@ cdef class CPU(object):
         cdef ops.Base op = self.get_next_instruction()
         if self.skip_next:
             self.skip_next = False
-            return
+            return False
         op.run(self)
+        return True
     
     def __getitem__(self, name):
         registers = 'A B C X Y Z I J SP PC O'.split()
         if name in registers:
             return self.registers[registers.index(name)]
         return self.memory[name]
+    
+    def __setitem__(self, name, value):
+        registers = 'A B C X Y Z I J SP PC O'.split()
+        if name in registers:
+            self.registers[registers.index(name)] = value
+        self.memory[name] = value
+        
         
     
     
