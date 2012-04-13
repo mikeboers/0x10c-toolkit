@@ -1,18 +1,21 @@
-set I, 0
+set a, 0xF000
+set b, 0x8000
+set c, 0
 
-ascii_loop:
-	set [0x8000 + I], I
-	add I, 1
-	ifg 256, I
-		set PC, ascii_loop
+:nextchar
+  ife a, 128
+    set pc, break
+  set [b], a
+  add a, 1
+  add b, 2
+  
+  add c, 1
+  mod c, 16
+  ife c, 0
+    add b, 32
+  
+  set pc, nextchar
 
-
-set I, 0
-key_loop:
-	set [0x80ff + I], [0x9000 + I]
-	add I, 1
-	and I, 0xf
-	set PC, key_loop
-	
-
-exit: set PC, exit
+:break
+:exit
+	set pc, exit

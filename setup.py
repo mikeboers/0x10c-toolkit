@@ -9,6 +9,12 @@ setup(
         Extension("cpu", ["cpu.pyx"]),
         Extension("values", ["values.pyx"]),
         Extension("ops", ["ops.pyx"]),
+        Extension("run", ["run.pyx"], extra_compile_args='''
+            -I/usr/include
+        '''.strip().split(), extra_link_args='''
+            -framework OpenGL
+            -framework GLUT
+        '''.strip().split()),
     ],
     
     install_requires = '''
