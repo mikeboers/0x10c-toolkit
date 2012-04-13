@@ -1,21 +1,32 @@
-set I, 0
-set J, 0
+set a, 0x8000
+set y, 0x0000
+
 :loop
-	set A, J
-    mul A, 32
-    add A, I
-    add A, 0x8000
-    
-    set [A], I
-    shl [A], 4
-    bor [A], J
-    shl [A], 8
-    bor [A], 0x58
-    
-    add I, 1
-    ifg I, 0xf
-    	add J, 1
-    and I, 0xf
-    and J, 0xf
-    
-    set PC, loop
+
+set z, y
+shr z, 12
+jsr printz
+
+set z, y
+shr z, 8
+and z, 0x0f
+jsr printz
+
+add y, 0x0100
+ife o, 0x0000
+set pc, loop
+
+set pc, exit
+
+:printz
+add z, 0x30
+ifg z, 0x39
+add z, 7
+bor z, y
+set [a], z
+add a, 1
+set pc, pop
+
+
+exit:
+	set pc, exit

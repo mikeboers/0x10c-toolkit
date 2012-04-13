@@ -10,6 +10,16 @@ CHAR_H = 13
 SCREEN_COLS = 32
 SCREEN_ROWS = 16
 
+cdef unsigned char colours[16][3]
+for r in (0, 1):
+    for g in (0, 1):
+        for b in (0, 1):
+            for h in (0, 1):
+                x = (h << 3) + (r << 2) + (g << 1) + b
+                colours[x][0] = (0x0, 0x40, 0x7f)[r + h]
+                colours[x][1] = (0x0, 0x40, 0x7f)[g + h]
+                colours[x][2] = (0x0, 0x40, 0x7f)[b + h]
+
 class App(object):
     
     def __init__(self):
@@ -33,8 +43,8 @@ class App(object):
 
         glClearColor(0, 0, 0, 1)
     
-        glEnable(GL_CULL_FACE)
-        glEnable(GL_DEPTH_TEST)
+        # glEnable(GL_CULL_FACE)
+        # glEnable(GL_DEPTH_TEST)
         glEnable(GL_COLOR_MATERIAL)
     
         glEnable(GL_BLEND)
@@ -61,15 +71,7 @@ class App(object):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         
-        def col(x):
-            h = int(bool(x & 0x8))
-            r = int(bool(x & 0x4))
-            g = int(bool(x & 0x2))
-            b = int(bool(x & 0x1))
-            
-            rgb = (h + r, h + g, h + b)
-            return tuple((0.0, 0.5, 1.0)[x] for x in rgb)
-            
+        cdef unsigned short i, c, x, y, bgx, fgx
         for x in xrange(SCREEN_COLS):
             for y in xrange(SCREEN_ROWS):
                 i = y * SCREEN_COLS + x
@@ -77,18 +79,21 @@ class App(object):
                 if not c:
                     continue
                 
-                # bgx = ((c & 0x0f00) >> 8)
-                # if bgx:
-                #     glColor(col(bgx))
-                #     glBegin(GL_QUADS)
-                #     glVertex(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                #     glVertex((x + 1) * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                #     glVertex((x + 1) * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
-                #     glVertex(x * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
-                #     glEnd()
-                # fgx = ((c & 0xf000) >> 12)
-                # glColor(col(fgx))
+                bgx = ((c & 0x0f00) >> 8)
+                if bgx:
+                    glColor3b(colours[bgx][0], colours[bgx][1], colours[bgx][2])
+                    glBegin(GL_QUADS)
+                    glVertex2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
+                    glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
+                    glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
+                    glVertex2i(x * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
+                    glEnd()
+                
+                fgx = ((c & 0xf000) >> 12)
+                
+                glColor3b(colours[fgx][0], colours[fgx][1], colours[fgx][2])
                 glRasterPos2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
+                
                 glut.bitmapCharacter(glut.BITMAP_8_BY_13, c & 0x7f)
         
         
@@ -106,7 +111,7 @@ class App(object):
             for i in xrange(100):
                 try:
                     self.cpu.run_one()
-                    print ' '.join(['%4x' % self.cpu[x] for x in 'PC SP O A B C X Y Z I J'.split()])
+                    # print ' '.join(['%4x' % self.cpu[x] for x in 'PC SP O A B C X Y Z I J'.split()])
                     
                 except ValueError as e:
                     print e
