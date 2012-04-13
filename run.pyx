@@ -3,33 +3,59 @@ import re
 import time
 
 from c_opengl cimport *
+
+from cpu cimport CPU
+
 from mygl import glu, glut
 
-CHAR_W = 8
-CHAR_H = 13
-SCREEN_COLS = 32
-SCREEN_ROWS = 16
+include "font.pyi"
+
+DEF CHAR_W = 8
+DEF CHAR_H = 13
+DEF SCREEN_COLS = 32
+DEF SCREEN_ROWS = 12
 
 cdef unsigned char colours[16][3]
-for r in (0, 1):
-    for g in (0, 1):
-        for b in (0, 1):
-            for h in (0, 1):
-                x = (h << 3) + (r << 2) + (g << 1) + b
-                colours[x][0] = (0x0, 0x40, 0x7f)[r + h]
-                colours[x][1] = (0x0, 0x40, 0x7f)[g + h]
-                colours[x][2] = (0x0, 0x40, 0x7f)[b + h]
+for i, (r, g, b) in enumerate([
+    (0x00, 0x00, 0x00),
+    (0x00, 0x1b, 0xaa),
+    (0x00, 0xaa, 0x00),
+    (0x00, 0xaa, 0xaa),
+    (0xaa, 0x02, 0x06),
+    (0xaa, 0x1b, 0xaa),
+    (0xaa, 0xaa, 0x00),
+    (0xaa, 0xaa, 0xaa),
+    (0x55, 0x55, 0x55),
+    (0x55, 0x55, 0xff),
+    (0x55, 0xfc, 0x55),
+    (0x55, 0xff, 0xff),
+    (0xff, 0x54, 0x55),
+    (0xff, 0x55, 0xff),
+    (0xff, 0xfc, 0x55),
+    (0xff, 0xff, 0xff),
+]):
+    colours[i][0] = r
+    colours[i][1] = g
+    colours[i][2] = b
 
-class App(object):
+
+cdef class App(object):
+    
+    cdef CPU cpu
+    cdef int last_PC
+    cdef float last_time
+    cdef unsigned short keyboard_ring_i
+    
+    cdef unsigned int width
+    cdef unsigned int height
     
     def __init__(self):
-        self.last_PC = None
+        self.last_PC = -1
         self.last_time = 0
         self.keyboard_ring_i = 0
     
     def setup(self, infile):
         
-        from cpu import CPU
         self.cpu = CPU()
         self.cpu.loads(infile.read())
         
@@ -42,13 +68,6 @@ class App(object):
         glut.createWindow('DCPU-16 Emulator')
 
         glClearColor(0, 0, 0, 1)
-    
-        # glEnable(GL_CULL_FACE)
-        # glEnable(GL_DEPTH_TEST)
-        glEnable(GL_COLOR_MATERIAL)
-    
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         
         glut.reshapeFunc(self.reshape)
         glut.displayFunc(self.display)
@@ -72,16 +91,16 @@ class App(object):
         glLoadIdentity()
         
         cdef unsigned short i, c, x, y, bgx, fgx
-        for x in xrange(SCREEN_COLS):
-            for y in xrange(SCREEN_ROWS):
+        for x in range(SCREEN_COLS):
+            for y in range(SCREEN_ROWS):
                 i = y * SCREEN_COLS + x
-                c = self.cpu[0x8000 + i]
+                c = self.cpu.memory[0x8000 + i]
                 if not c:
                     continue
                 
                 bgx = ((c & 0x0f00) >> 8)
                 if bgx:
-                    glColor3b(colours[bgx][0], colours[bgx][1], colours[bgx][2])
+                    glColor3ub(colours[bgx][0], colours[bgx][1], colours[bgx][2])
                     glBegin(GL_QUADS)
                     glVertex2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
                     glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
@@ -91,10 +110,11 @@ class App(object):
                 
                 fgx = ((c & 0xf000) >> 12)
                 
-                glColor3b(colours[fgx][0], colours[fgx][1], colours[fgx][2])
+                glColor3ub(colours[fgx][0], colours[fgx][1], colours[fgx][2])
                 glRasterPos2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
                 
-                glut.bitmapCharacter(glut.BITMAP_8_BY_13, c & 0x7f)
+                glBitmap(4, 8, 0, 0, 4, 0, &font[c & 0x7f][0])
+                # glut.bitmapCharacter(glut.BITMAP_8_BY_13, c & 0x7f)
         
         
         
@@ -105,27 +125,17 @@ class App(object):
         self.keyboard_ring_i = (self.keyboard_ring_i + 1) & 0xf
         
     def idle(self):
-        
-        if True or self.last_PC != self.cpu['PC']:
-            self.last_PC = self.cpu['PC']
-            for i in xrange(100):
-                try:
-                    self.cpu.run_one()
-                    # print ' '.join(['%4x' % self.cpu[x] for x in 'PC SP O A B C X Y Z I J'.split()])
-                    
-                except ValueError as e:
-                    print e
-                    print 'STOPPING'
-                    self.last_PC = self.cpu['PC'] # Should stop it.
-                    break
-        else:
-            print 'stopped'
-            glut.idleFunc(None)
+        cdef int i
 
-        current_time = time.time()
-        if current_time - self.last_time > 1.0 / 60:
-            glut.postRedisplay()
-            self.last_time = current_time
+        for i in range(3000):
+            try:
+                self.cpu.run_one()
+                # print ' '.join(['%4x' % self.cpu[x] for x in 'PC SP O A B C X Y Z I J'.split()]) 
+            except ValueError as e:
+                print e
+
+        glut.postRedisplay()
+        
         
     
         
