@@ -123,11 +123,13 @@ cdef class Label(Base):
     cdef public object label
     cdef public bint indirect
     cdef public unsigned short offset
+    cdef public bint subtract
     
-    def __init__(self, label, indirect=False, offset=0):
+    def __init__(self, label, indirect=False, offset=0, subtract=False):
         self.label = label
         self.indirect = indirect
         self.offset = offset
+        self.subtract = subtract
     
     def __repr__(self):
         out = self.label

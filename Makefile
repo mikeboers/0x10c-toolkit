@@ -1,4 +1,6 @@
 
+.PHONY: default build clean test
+
 default: build
 
 build:

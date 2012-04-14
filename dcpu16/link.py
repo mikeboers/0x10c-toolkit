@@ -2,7 +2,7 @@ import re
 import sys
 
 
-def parse_symbol_header(encoded):
+def parse_symbol_defs(encoded):
     out = []
     for chunk in encoded.split(', '):
         chunk = chunk.strip()
@@ -12,6 +12,20 @@ def parse_symbol_header(encoded):
         if m:
             name, value = m.groups()
             out.append((name, int(value, 16)))
+        else:
+            raise ValueError('could not parse symbol header chunk: %r' % chunk)
+    return out
+
+def parse_symbol_refs(encoded):
+    out = []
+    for chunk in encoded.split(', '):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        m = re.match(r'0x([a-fA-F0-9]+)(\+|-)(\w+)', chunk)
+        if m:
+            value, operation, name = m.groups()
+            out.append((name, operation=='-', int(value, 16)))
         else:
             raise ValueError('could not parse symbol header chunk: %r' % chunk)
     return out
@@ -54,14 +68,17 @@ class Linker(object):
             
             code = obj.code[:]
             
-            for name, from_ in obj.symbol_references:
+            for name, sub, from_ in obj.symbol_references:
                 to = symbols.get(name)
                 
                 if to is None:
                     missing.append(name)
                     continue
                 
-                code[from_] += to
+                if sub:
+                    code[from_] -= to
+                else:
+                    code[from_] += to
             
             self.code.extend(code)
             offset += len(code)
@@ -123,9 +140,9 @@ class Object(object):
         for i in xrange(0, len(encoded), 4):
             self.code.append(int(encoded[i:i + 4], 16))
         
-        self.global_symbols = parse_symbol_header(self.headers.get('global-symbols', ''))
-        self.local_symbols = parse_symbol_header(self.headers.get('local-symbols', ''))
-        self.symbol_references = parse_symbol_header(self.headers.get('symbol-references', ''))
+        self.global_symbols    = parse_symbol_defs(self.headers.get('global-symbols', ''))
+        self.local_symbols     = parse_symbol_defs(self.headers.get('local-symbols', ''))
+        self.symbol_references = parse_symbol_refs(self.headers.get('symbol-references', ''))
         
         
 def main():

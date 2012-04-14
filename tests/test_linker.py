@@ -53,6 +53,20 @@ class TestLinker(TestCase):
             0000: 7c01 000d 7c11 000e 7c21 000f 7831 000d
             0008: 7841 000e 7851 000f 0000 1234 5678 9abc
         ''')
+        
+        
+    def test_negative_labels(self):
+        self.assertEqualHex(self.assemble_and_link('''
+            :al dat 0, 1, 2, 3, 4
+            :bl dat 5, 6, 7, 8, 9
+            :cl dat 10 - al, 10 - bl, 10 - cl
+        '''), self.assemble_and_link('''
+            :al dat 0, 1, 2, 3, 4
+            :bl dat 5, 6, 7, 8, 9
+            :cl dat 10, 5, 0
+            
+        '''))
+        
     
         
         

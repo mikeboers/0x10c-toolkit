@@ -21,6 +21,9 @@
 	
 	set PC, loop
 	
+	
+	set A, 10 - loop
+	
 :exit
 	; This should crash the emulator.
 	set PC, exit

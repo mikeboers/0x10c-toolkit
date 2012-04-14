@@ -102,6 +102,8 @@ class TestASM(TestCase):
             set [A + 0xffff], 0x1234
         '''))
         
+        
+        
     
         
         

@@ -174,9 +174,6 @@ class Assembler(object):
                 raise ValueError('cannot identity chunk %r in value %r' % (chunk, this_value))
             if label:
                 raise ValueError('cannot have two labels in value %r' % this_value)
-
-            if operation != '+':
-                raise ValueError('cannot use operator %r on labels in value %r' % (operation, this_value))
                 
             label = chunk
         
@@ -187,7 +184,7 @@ class Assembler(object):
                 raise ValueError('cannot offset direct register in value %r' % this_value)
             return values.Register(reg, indirect=indirect, offset=offset, label=label), line
         elif label:
-            return values.Label(label, indirect=indirect, offset=offset), line
+            return values.Label(label, indirect=indirect, offset=offset, subtract=operation=='-'), line
         elif indirect:
             return values.Indirect(offset), line
         else:
@@ -262,25 +259,38 @@ class Assembler(object):
         code = []
         for x in raw_code:
             if isinstance(x, values.Label):
-                self.symbol_references.append((x.label, len(code)))
+                self.symbol_references.append((x.label, x.subtract, len(code)))
                 code.append(x.offset)
             elif isinstance(x, int):
                 code.append(x)
             else:
                 raise TypeError('cannot assemble code object %r' % x)
         
+
+            
         out = []
-        for header_name, header_value in [
-            ('Global-Symbols', self.global_symbols),
-            ('Local-Symbols', self.local_symbols),
-            ('Symbol-References', self.symbol_references),
-        ]:
-            if header_value:
-                out.append('; %s:' % header_name)
-                for i, (sym, loc) in enumerate(header_value):
+        
+        def format_symbol_defs(values):
+            if values:
+                for i, (sym, loc) in enumerate(values):
                     out.append(', ' if i else ' ')
                     out.append('%s=0x%04x' % (sym, loc))
                 out.append('\n')
+        def format_symbol_refs(values):
+            if values:
+                for i, (sym, sub, loc) in enumerate(values):
+                    out.append(', ' if i else ' ')
+                    out.append('0x%04x%s%s' % (loc, '-' if sub else '+', sym))
+                out.append('\n')
+        
+        for header_name, header_value, formatter in [
+            ('Global-Symbols', self.global_symbols, format_symbol_defs),
+            ('Local-Symbols', self.local_symbols, format_symbol_defs),
+            ('Symbol-References', self.symbol_references, format_symbol_refs),
+        ]:
+            if header_value:
+                out.append('; %s:' % header_name)
+                formatter(header_value)
         
         for i, x in enumerate(code):
             if i % 8 == 0:
