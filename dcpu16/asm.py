@@ -55,8 +55,8 @@ class Assembler(object):
         self.local_symbols = []
         self.symbol_references = []
         self.constants = dict(
-            VIDEO=0x8000,
-            KEYBOARD=0x9000,
+            VIDEO='0x8000',
+            KEYBOARD='0x9000',
         )
     
     def _get_args(self, line):
@@ -116,17 +116,22 @@ class Assembler(object):
         # Below here handles registers (with offsets), labels, and literals.
         
         
-        # Indirect things.
+        # Extract indirect sequences.
         m = match(r'\[([^\]]+)\]', line)
         if m:
             indirect = True
             this_value = m.group(1)
             line = line[m.end(0):]
+        
+        # Extract non-indirect sequences.
         else:
-            m = match(r'(.+?)', line)
-            this_value = m.group(1)
-            line = line[m.end(0):]
             indirect = False
+            line_chunks = line.split(',', 1)
+            if len(line_chunks) == 2:
+                this_value, line = line_chunks
+            else:
+                this_value = line_chunks[0]
+                line = ''
         
         reg = None
         label = None
@@ -134,7 +139,8 @@ class Assembler(object):
                 
         for chunk in this_value.split('+'):
             chunk = chunk.strip()
-                
+            chunk = self.constants.get(chunk, chunk)
+            
             try:
                 offset += parse_number(chunk)
             except ValueError:

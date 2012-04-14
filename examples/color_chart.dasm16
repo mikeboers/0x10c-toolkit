@@ -1,4 +1,4 @@
-set a, 0x8000
+set a, VIDEO
 set y, 0x0000
 
 :loop
