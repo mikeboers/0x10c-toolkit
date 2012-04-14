@@ -17,20 +17,20 @@ DEF SCREEN_ROWS = 12
 cdef unsigned char colours[16][3]
 for i, (r, g, b) in enumerate([
     (0x00, 0x00, 0x00),
-    (0x00, 0x1b, 0xaa),
+    (0x00, 0x00, 0xaa),
     (0x00, 0xaa, 0x00),
     (0x00, 0xaa, 0xaa),
-    (0xaa, 0x02, 0x06),
-    (0xaa, 0x1b, 0xaa),
+    (0xaa, 0x00, 0x00),
+    (0xaa, 0x00, 0xaa),
     (0xaa, 0xaa, 0x00),
     (0xaa, 0xaa, 0xaa),
     (0x55, 0x55, 0x55),
     (0x55, 0x55, 0xff),
-    (0x55, 0xfc, 0x55),
+    (0x55, 0xff, 0x55),
     (0x55, 0xff, 0xff),
-    (0xff, 0x54, 0x55),
+    (0xff, 0x55, 0x55),
     (0xff, 0x55, 0xff),
-    (0xff, 0xfc, 0x55),
+    (0xff, 0xff, 0x55),
     (0xff, 0xff, 0xff),
 ]):
     colours[i][0] = r
@@ -58,49 +58,54 @@ cdef class App(object):
     
     def setup(self, infile):
         
+        # Setup the CPU.
         self.cpu = CPU()
         self.cpu.loads(infile.read())
         
+        # Setup GLUT.
         glut.init(sys.argv)
         glut.initDisplayMode(glut.DOUBLE | glut.RGBA | glut.DEPTH)
     
+        # Setup the main window.
         self.width = CHAR_W * SCREEN_COLS * 3
         self.height = CHAR_H * SCREEN_ROWS * 3
         glut.initWindowSize(self.width, self.height)
         glut.createWindow('DCPU-16 Emulator')
         
-        glClearColor(0, 0, 0, 1)
-        
+        # Setup callbacks.
         glut.reshapeFunc(self.reshape)
         glut.displayFunc(self.display)
         glut.idleFunc(self.idle)
         glut.keyboardFunc(self.keyboard)
         
-        glGenTextures(1, &self.font_texture)
-        glBindTexture(GL_TEXTURE_2D, self.font_texture)
-        # print 'font_texture', self.font_texture
+        # Setup font texture.
+        # TODO: Cython should have access to this.
         img = Image.open('font.png')
         img = img.convert('RGBA')
         img.putalpha(img.split()[0])
         data = img.tostring()
         cdef unsigned char *c_data = data
         assert len(data) == 16384
+        glGenTextures(1, &self.font_texture)
+        glBindTexture(GL_TEXTURE_2D, self.font_texture)
         glTexImage2D(GL_TEXTURE_2D, 0, 4, 32 * 4, 4 * 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, c_data)
-        print glGetError()
+        
+        
+        # INIT OPENGL
+        
+        glClearColor(0, 0, 0, 1)
+        
         glEnable(GL_TEXTURE_2D)
-        # glEnable(GL_COLOR_MATERIAL)
-        #glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        #glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        
         glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         
         
-    
     def run(self):
         return glut.mainLoop()
-        
+    
     def reshape(self, width, height):
         self.width = width
         self.height = height
