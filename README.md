@@ -116,3 +116,45 @@ This repo contains my tools for experimenting with [the DCPU-16 spec](http://0x1
 	
 - cycle costs
 
+- monitor colours; see http://0x10co.de/io
+	- have a lookup table of colours instead
+	- match their font as well; bitmap all the characters
+
+- rewrite OpenGL runner in Cython
+	- how to link against OpenGL from Cython so I'm not wasting cycles with my
+	  wrapper?
+	 
+- runner should support multiple CPUs networked together
+
+- GUI in TK, WX, or QT
+	- manually edit memory
+	- manually edit registers
+	- single step
+	- PC highlighting in memory
+
+- start a BASIC-like compiler
+- start a C-like compiler
+	- use http://code.google.com/p/pycparser/
+	- uchar/ushort are both unsigned words
+	- uint, ulong are 32/64 bits long
+	- local variables at the top of functions and control blocks
+
+- negative offsets
+- subtracting labels
+
+- implement malloc as a ring-list:
+	- the header is the number of words to the next header, unless it is 0 in
+	  which case it means to go back to the start of the heap
+	- hold onto the last free header to be worked on in a static location
+		- for malloc, the location of the next block
+		- for free, the location of the freed block
+- simplify free:
+	- assert that the user pass the first word after the header
+
+- crypto
+	- http://en.wikipedia.org/wiki/XXTEA
+	- http://en.wikipedia.org/wiki/RC4#Description
+	- http://en.wikipedia.org/wiki/International_Data_Encryption_Algorithm
+	- http://en.wikipedia.org/wiki/BLAKE_(hash_function)
+	- md5?
+

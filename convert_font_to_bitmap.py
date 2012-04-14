@@ -13,16 +13,14 @@ for i in range(128):
     
     prev = 0
     for row in range(8):
-        y = (yc * 8 + row)
+        y = (yc * 8 + (7 - row))
         data = 0
         for col in range(4):
             x = xc * 4 + col
             bit = int(img.getpixel((x, y))[0] > 128)
             data = (data << 1) + bit
-        if row % 2:
-            print 'font[%d][%d] = 0x%x%x' % (i, row / 2, prev, data)
-        else:
-            prev = data
+        data <<= 4
+        print 'font[%d][%d] = 0x%02x' % (i, row, data)
     
     print
             

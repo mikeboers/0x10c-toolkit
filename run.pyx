@@ -10,8 +10,8 @@ from mygl import glu, glut
 
 include "font.pyi"
 
-DEF CHAR_W = 8
-DEF CHAR_H = 13
+DEF CHAR_W = 4
+DEF CHAR_H = 8
 DEF SCREEN_COLS = 32
 DEF SCREEN_ROWS = 12
 
@@ -60,7 +60,7 @@ cdef class App(object):
         self.cpu.loads(infile.read())
         
         glut.init(sys.argv)
-        glut.initDisplayMode(glut.DOUBLE | glut.RGBA | glut.DEPTH | glut.MULTISAMPLE)
+        glut.initDisplayMode(glut.DOUBLE | glut.RGBA | glut.DEPTH)
     
         self.width = CHAR_W * SCREEN_COLS
         self.height = CHAR_H * SCREEN_ROWS
@@ -91,6 +91,7 @@ cdef class App(object):
         glLoadIdentity()
         
         cdef unsigned short i, c, x, y, bgx, fgx
+        
         for x in range(SCREEN_COLS):
             for y in range(SCREEN_ROWS):
                 i = y * SCREEN_COLS + x
@@ -111,9 +112,11 @@ cdef class App(object):
                 fgx = ((c & 0xf000) >> 12)
                 
                 glColor3ub(colours[fgx][0], colours[fgx][1], colours[fgx][2])
-                glRasterPos2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
                 
-                glBitmap(4, 8, 0, 0, 4, 0, &font[c & 0x7f][0])
+                glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+                glRasterPos2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
+                # glBitmap(4, 8, 0, 0, 0, 0, bitmap)
+                glBitmap(4, 8, 0, 0, 0, 0, font[c & 0xf7])
                 # glut.bitmapCharacter(glut.BITMAP_8_BY_13, c & 0x7f)
         
         
