@@ -112,71 +112,64 @@ class Assembler(object):
             value = ast.literal_eval(m.group(1))
             return StringValue(value), line[m.end(0):]
         
-        # Literal values.
-        m = match(r'(' + NUMBER + ')', line)
-        if m:
-            return values.Literal(parse_number(m.group(1))), line[m.end(0):]
-    
-        # Basic registers.
-        m = match(r'(' + REGISTER + ')', line)
-        if m:
-            return values.Register(parse_register(m.group(1))), line[m.end(0):]
         
-        # Indirect registers and labels with offsets.
+        # Below here handles registers (with offsets), labels, and literals.
+        
+        
+        # Indirect things.
         m = match(r'\[([^\]]+)\]', line)
         if m:
-            
-            reg = None
-            label = None
-            offset = 0
-            
-            for chunk in m.group(1).split('+'):
-                chunk = chunk.strip()
-                
-                try:
-                    offset += parse_number(chunk)
-                except ValueError:
-                    pass
-                else:
-                    continue
-                
-                try:
-                    new_reg = parse_register(chunk)
-                except ValueError:
-                    pass
-                else:
-                    if reg:
-                        raise ValueError('cannot have two registers in indirect value')
-                    reg = new_reg
-                    continue
-                
-                if not re.match(r'^\w+$', chunk):
-                    raise ValueError('cannot identity chunk in indirect value: %r' % chunk)
-                if label:
-                    raise ValueError('cannot have two labels in indirect value')
-                label = chunk
-            
-            # print 'reg', reg, 'label', repr(label), 'offset', offset
-            
-            if reg is not None:
-                return values.Register(reg, indirect=True, offset=offset, label=label), line[m.end(0):]
-            elif label:
-                return values.Label(label, indirect=True, offset=offset), line[m.end(0):]
-            else:
-                return values.Indirect(offset), line[m.end(0):]
+            indirect = True
+            this_value = m.group(1)
+            line = line[m.end(0):]
+        else:
+            m = match(r'(.+?)', line)
+            this_value = m.group(1)
+            line = line[m.end(0):]
+            indirect = False
         
-        # Basic (and offset) labels.
-        m = match(r'(?:(' + NUMBER + ')\s*\+\s*)?' +
-                  r'(\w+)' +
-                  r'(?:\s*\+\s*(' + NUMBER + '))?', line)
-        if m:
-            pre, label, post = m.groups()
-            offset = parse_number(pre or '0') + parse_number(post or '0')
-            return values.Label(label, indirect=False, offset=offset), line[m.end(0):]
-    
-
-    
-        raise ValueError('could not extract values from %r' % line)
+        reg = None
+        label = None
+        offset = 0
+                
+        for chunk in this_value.split('+'):
+            chunk = chunk.strip()
+                
+            try:
+                offset += parse_number(chunk)
+            except ValueError:
+                pass
+            else:
+                continue
+                
+            try:
+                new_reg = parse_register(chunk)
+            except ValueError:
+                pass
+            else:
+                if reg:
+                    raise ValueError('cannot have two registers in indirect value')
+                reg = new_reg
+                continue
+                
+            if not re.match(r'^\w+$', chunk):
+                raise ValueError('cannot identity chunk in value: %r' % chunk)
+            if label:
+                raise ValueError('cannot have two labels in value')
+            label = chunk
+            
+        if reg is not None:
+            if offset and not indirect:
+                raise ValueError('cannot offset direct register')
+            return values.Register(reg, indirect=indirect, offset=offset, label=label), line
+        elif label:
+            return values.Label(label, indirect=indirect, offset=offset), line
+        elif indirect:
+            return values.Indirect(offset), line
+        else:
+            return values.Literal(offset), line
+        
+        
 
 
     def load(self, infile):
