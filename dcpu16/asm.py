@@ -136,13 +136,23 @@ class Assembler(object):
         reg = None
         label = None
         offset = 0
-                
-        for chunk in this_value.split('+'):
-            chunk = chunk.strip()
+        
+        chunks = re.split(r'(\+|-)', this_value)
+        for i in range(0, len(chunks), 2):
+            if not i:
+                operation = '+'
+            else:
+                operation = chunks[i-1]
+            chunk = chunks[i].strip()
+            
+            # Lookup constants.
             chunk = self.constants.get(chunk, chunk)
             
             try:
-                offset += parse_number(chunk)
+                if operation == '+':
+                    offset += parse_number(chunk)
+                else:
+                    offset -= parse_number(chunk)
             except ValueError:
                 pass
             else:
@@ -154,19 +164,27 @@ class Assembler(object):
                 pass
             else:
                 if reg:
-                    raise ValueError('cannot have two registers in indirect value')
+                    raise ValueError('cannot have two registers in value %r' % this_value)
+                if operation != '+':
+                    raise ValueError('cannot use operator %r on registers in value %r' % (operation, this_value))
                 reg = new_reg
                 continue
                 
             if not re.match(r'^\w+$', chunk):
-                raise ValueError('cannot identity chunk in value: %r' % chunk)
+                raise ValueError('cannot identity chunk %r in value %r' % (chunk, this_value))
             if label:
-                raise ValueError('cannot have two labels in value')
+                raise ValueError('cannot have two labels in value %r' % this_value)
+
+            if operation != '+':
+                raise ValueError('cannot use operator %r on labels in value %r' % (operation, this_value))
+                
             label = chunk
-            
+        
+        offset = offset % 0x10000
+        
         if reg is not None:
             if offset and not indirect:
-                raise ValueError('cannot offset direct register')
+                raise ValueError('cannot offset direct register in value %r' % this_value)
             return values.Register(reg, indirect=indirect, offset=offset, label=label), line
         elif label:
             return values.Label(label, indirect=indirect, offset=offset), line

@@ -87,7 +87,22 @@ class TestASM(TestCase):
         '''), self.assemble('''
             set [11 + A], [17 + B]
         '''))
+    
+    def test_negative_values(self):
+        self.assertEqualHex(self.assemble('''
+            set [0x1000 - 1], 0x1234
+        '''), self.assemble('''
+            set [0x0fff], 0x1234
+        '''))
         
+    def test_negative_offsets(self):
+        self.assertEqualHex(self.assemble('''
+            set [A - 1], 0x1234
+        '''), self.assemble('''
+            set [A + 0xffff], 0x1234
+        '''))
+        
+    
         
         
         
