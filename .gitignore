@@ -8,3 +8,4 @@ man
 build
 *.so
 *.c
+*.egg-info

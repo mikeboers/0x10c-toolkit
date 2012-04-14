@@ -2,8 +2,8 @@ import sys
 import re
 import ast
 
-import ops
-import values
+from . import ops
+from . import values
 
 
 
@@ -278,8 +278,7 @@ class Assembler(object):
         return ''.join(out)
 
 
-
-if __name__ == '__main__':
+def main():
     
     if len(sys.argv) == 1:
         infile = sys.stdin
@@ -291,4 +290,9 @@ if __name__ == '__main__':
     asm = Assembler()
     asm.load(infile)
     print asm.dumps()
+
+
+if __name__ == '__main__':
+    main()
+
     

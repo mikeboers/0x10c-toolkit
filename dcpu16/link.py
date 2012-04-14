@@ -136,9 +136,7 @@ class Object(object):
         self.symbol_references = parse_symbol_header(self.headers.get('symbol-references', ''))
         
         
-            
-        
-if __name__ == '__main__':
+def main():
     
     if len(sys.argv) == 1:
         infiles = [sys.stdin]
@@ -153,7 +151,10 @@ if __name__ == '__main__':
         exit(1)
     
     print linker.dumps()
-    
+
+
+if __name__ == '__main__':
+    main()
 
 
 

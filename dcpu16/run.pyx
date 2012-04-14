@@ -4,9 +4,8 @@ import time
 from PIL import Image
 from c_opengl cimport *
 
-from cpu cimport CPU
-
-from mygl import glu, glut
+from .cpu cimport CPU
+from .mygl import glu, glut
 
 
 DEF CHAR_W = 4

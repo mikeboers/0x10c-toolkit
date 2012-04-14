@@ -2,9 +2,10 @@ import sys
 import re
 import time
 
-if __name__ == '__main__':
+
+def main():
     
-    from cpu import CPU
+    from .cpu import CPU
 
     if len(sys.argv) == 1:
         infile = sys.stdin
@@ -22,3 +23,7 @@ if __name__ == '__main__':
 
     cpu.disassemble()
     print
+
+
+if __name__ == '__main__':
+    main()
