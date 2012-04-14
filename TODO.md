@@ -4,11 +4,6 @@
 - http://pastie.org/pastes/3772655/text?key=xw0dmiwx5khzoagoemyww
 - http://0x10cwiki.com/wiki/DCPU-16#cite_note-leakspec-1
 
-√ disassembler script
-√ running script
-√ assembling script
-√ linking script
-
 - incorperate normal assembler syntax
 	- appears to be intel/MASM/NASM syntax
 	- see:
@@ -30,51 +25,14 @@
 	
 	- GAS:
 		- comments can start with any of #!;@|
-	
-- assembler
-	√ assemble into object files
-	√ do not resolve symbols; output them into comments in the object files
-		; Global-Symbols: start=0x0
-		; Local-Symbols: loop=0x1234
-		; Symbol-References: loop=0x1500
-	- how do deal with short labels?
-		It may not be all that important to deal with, as it only really
-		benifits jumps to the first 0x1f words of code.
-	
-- linker
-	√ link assembled object files and resolve all labels/symbols
-		- add final symbol addr into the words that are placeholders for it,
-		  which will allow us to have positive offsets from them
-	x if an object has start at the beginning, put it first, otherwise throw
-	  in a `set PC, start`. Not going to do this as one can easily add a stub
-	  file as the first argument to the linker which contains: `set PC, start`
-	- consider adding special global symbols:
-		- __HEAP__ would point to the first word after the end of memory
-		- __KEYBOARD__ to the keyboard buffer
-		- __VIDEO__ to the video screen
 
-- C compiler
+
+- how do deal with short labels?
+	It may not be all that important to deal with, as it only really
+	benifits jumps to the first 0x1f words of code.
 
 - optimize
 	- easly binding Cython everywhere
-
-- move modules into a package
-
-- consider adding label offsets to registers: [A + data]
-	This would be handy if we are iterating across some words located at `data`.
-	Would be handy if we could swap out nearly any number for a label.
-
-√ abstract offsets to a sequence of numbers, labels, and registers, where you
-  can have upto 1 register and up to 1 label, and everything else is determined at link time
-  	- no really special treatment needed from the linker: symbols are added on
-	  top of hard-coded offsets
-	- all cases:
-		√ [A + label]
-		√ [A + label + 1]
-		√ [label]
-		√ [label + 1]
-		√ label
-		√ label + 1
 
 - be able to have negative labels and offsets, in addition to multiple labels
 	set A, two - one
@@ -85,14 +43,16 @@
 	- comment stripping normalizer
 	- value parsing?
 
-- convert scripts into setuptools entrypoints
-
 - alloc.asm has a bug: unallocated blocks of length 0 encode to 0, which flags
   the start of fresh heap. Headers should track the length to the next header
   (what it does now, but +1).
+  	- free should assume it was given the first word
+	- xfree does not
 
 - assembler directives:
-	√ .GLOBAL start
+	.macro name -> .mend
+	.fill count value
+	.zero count
 
 - entrypoints
 	- all equal SECTIONS get assembled next to each other
@@ -129,33 +89,23 @@
 	- uint, ulong are 32/64 bits long
 	- local variables at the top of functions and control blocks
 
-- negative offsets
-- subtracting labels
-
 - .define CONSTANT value
 	- predefined VIDEO, KEYBOARD, RADIO (eventually)
 	
 - split run.py into EmulatorApp and CPUWindow so that we may have multiple CPUS
   running at the same time
 
-- implement malloc as a ring-list:
-	- the header is the number of words to the next header, unless it is 0 in
-	  which case it means to go back to the start of the heap
-	- hold onto the last free header to be worked on in a static location
-		- for malloc, the location of the next block
-		- for free, the location of the freed block
-- simplify free:
-	- assert that the user pass the first word after the header
-
 - runner should automatically compile/link files
 	- .dasm16, .dasm, or .asm are assembly
 	- .dobj16, .dobj, or .obj are objects
 	- .dhex16, .dhex, or .hex are final linked code
 
-- make a textmake theme
+- make a textmate theme
+- force textmate icon
 
 - make tool to conform syntax to other established convensions
 	- expand all macros and constants
+	- labels with prefixed ':'
 	
 - crypto
 	- http://en.wikipedia.org/wiki/XXTEA
