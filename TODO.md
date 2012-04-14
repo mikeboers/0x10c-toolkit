@@ -96,11 +96,6 @@
 - split run.py into EmulatorApp and CPUWindow so that we may have multiple CPUS
   running at the same time
 
-- runner should automatically compile/link files
-	- .dasm16, .dasm, or .asm are assembly
-	- .dobj16, .dobj, or .obj are objects
-	- .dhex16, .dhex, or .hex are final linked code
-
 - force textmate icon
 
 - make tool to conform syntax to other established convensions

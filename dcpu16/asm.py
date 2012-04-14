@@ -182,13 +182,11 @@ class Assembler(object):
     def _load_line(self, line):
         
         # Strip comments.
-        line = re.sub(r'[#;].*', '', line).strip()
+        line = re.sub(r';.*', '', line).strip()
     
-        m = re.match(r':\w+|\w+:', line)
+        m = re.match(r':(\w+)', line)
         if m:
-            label = m.group().strip(':')
-            # print '%s:' % label
-            self.operations.append(Label(label))
+            self.operations.append(Label(m.group(1)))
             line = line[m.end(0):].strip()
     
         if not line:

@@ -8,7 +8,7 @@ from . import asm
 def get_file_type(path):
     name = os.path.basename(path)
     ext = os.path.splitext(name)[1]
-    m = re.match(r'\.d?(asm|hex|obj)(?:16)?$', ext)
+    m = re.match(r'\.d?(asm|hex|obj)(?:16)?$', ext.lower())
     if m:
         return m.group(1)
     else:
