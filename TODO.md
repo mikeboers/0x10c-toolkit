@@ -26,6 +26,7 @@
 	- GAS:
 		- comments can start with any of #!;@|
 
+- move font.png into some resource directory and make sure setup.py includes it
 
 - how do deal with short labels?
 	It may not be all that important to deal with, as it only really
@@ -100,7 +101,6 @@
 	- .dobj16, .dobj, or .obj are objects
 	- .dhex16, .dhex, or .hex are final linked code
 
-- make a textmate theme
 - force textmate icon
 
 - make tool to conform syntax to other established convensions

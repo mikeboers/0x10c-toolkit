@@ -24,11 +24,6 @@ class Linker(object):
         self.global_symbols = {}
         self.code = []
     
-    def loads(self, source, name='<string>'):
-        obj = Object(name)
-        obj.loads(source)
-        self.objects.append(obj)
-    
     def load(self, infile, name='<file>'):
         obj = Object(name)
         obj.load(infile)
@@ -72,14 +67,8 @@ class Linker(object):
             offset += len(code)
                     
         if missing:
-            for x in missing:
-                print 'undefined symbol: %s' % x
-            return False
+            raise ValueError('undefined symbols: %s' % (', '.join(sorted(missing))))
         
-        return True
-    
-    def dumps(self):
-    
         out = []
         for i, x in enumerate(self.code):
             if i % 8 == 0:
@@ -92,6 +81,9 @@ class Linker(object):
 
         return ''.join(out)
         
+
+    
+        
         
         
 
@@ -102,10 +94,10 @@ class Object(object):
         self.headers = {}
         self.code = []
     
-    def loads(self, source):
-        self.load(source.splitlines())
-    
     def load(self, infile):
+        if isinstance(infile, basestring):
+            infile = infile.splitlines()
+        
         encoded = []
         for line in infile:
     
@@ -147,10 +139,11 @@ def main():
     for infile in infiles:
         linker.load(infile)
     
-    if not linker.link():
+    try:
+        print linker.link()
+    except ValueError as e:
+        print e
         exit(1)
-    
-    print linker.dumps()
 
 
 if __name__ == '__main__':

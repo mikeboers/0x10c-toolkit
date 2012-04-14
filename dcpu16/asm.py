@@ -174,11 +174,9 @@ class Assembler(object):
 
 
     def load(self, infile):
+        if isinstance(infile, basestring):
+            infile = infile.splitlines()
         for line in infile:
-            self._load_line(line)
-
-    def loads(self, source):
-        for line in source.splitlines():
             self._load_line(line)
     
     def _load_line(self, line):
@@ -223,11 +221,8 @@ class Assembler(object):
         op = opcls(*args)
         
         self.operations.append(op)
-
-    def dump(self, file):
-        file.write(self.dumps())
     
-    def dumps(self):
+    def assemble(self):
         
         raw_code = []
                 
@@ -289,7 +284,7 @@ def main():
     
     asm = Assembler()
     asm.load(infile)
-    print asm.dumps()
+    print asm.assemble()
 
 
 if __name__ == '__main__':
