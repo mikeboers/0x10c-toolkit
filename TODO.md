@@ -100,7 +100,6 @@
 
 - make tool to conform syntax to other established convensions
 	- expand all macros and constants
-	- labels with prefixed ':'
 	
 - crypto
 	- http://en.wikipedia.org/wiki/XXTEA

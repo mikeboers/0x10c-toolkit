@@ -1,9 +1,4 @@
-from . import TestCase
-
-import values
-from cpu import CPU
-from asm import Assembler
-from link import Linker
+from . import *
 
 
 class TestADD(TestCase):
@@ -37,9 +32,9 @@ class TestADD(TestCase):
         ; stop
             dat 0
         
-        one:
+        :one
             dat 0x1234, 0x5678
-        two:
+        :two
             dat 0x3456, 0x789a
         
         ''')
@@ -83,9 +78,9 @@ class TestMUL(TestCase):
         ; stop
             dat 0
         
-        one:
+        :one
             dat 0x0000, 0x0234
-        two:
+        :two
             dat 0x0001, 0x2345
         
         ''')

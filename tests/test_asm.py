@@ -1,9 +1,4 @@
-from . import TestCase
-
-import values
-from cpu import CPU
-from asm import Assembler
-from link import Linker
+from . import *
 
 
 class TestASM(TestCase):
@@ -37,9 +32,9 @@ class TestASM(TestCase):
             set C, TEST
             dat 0 ; end
 
-        test: dat 0
-        Test: dat 1
-        TEST: dat 2
+        :test dat 0
+        :Test dat 1
+        :TEST dat 2
             
         '''), '''
             ; Manually verified with the disassembler.
@@ -88,7 +83,7 @@ class TestASM(TestCase):
     
     def test_register_labels(self):
         self.assertEqualHex(self.assemble('''
-            start: set [A + 1 + 10 + start], [0x10 + B + 1]
+            :start set [A + 1 + 10 + start], [0x10 + B + 1]
         '''), self.assemble('''
             set [11 + A], [17 + B]
         '''))

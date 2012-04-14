@@ -1,8 +1,5 @@
+from . import *
 
-from . import TestCase
-
-import values
-from cpu import CPU
 
 class TestLiterals(TestCase):
     

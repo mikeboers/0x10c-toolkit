@@ -1,9 +1,4 @@
-from . import TestCase
-
-import values
-from cpu import CPU
-from asm import Assembler
-from link import Linker
+from . import *
 
 
 class TestLinker(TestCase):
@@ -12,22 +7,22 @@ class TestLinker(TestCase):
         
         a = '''
         
-        start:
+        :start
             set A, [data]
             jsr func
-        exit:
+        :exit
             set PC, exit
         
         '''
         b = '''
             
         .GLOBAL func
-        func:
+        :func
             add A, A
             set PC, POP
                 
         .GLOBAL data
-        data:
+        :data
             DAT 0x1234
             
         '''
@@ -39,7 +34,7 @@ class TestLinker(TestCase):
         ''')
         
         cpu = CPU()
-        cpu.loads(hex)
+        cpu.load(hex)
         cpu.run()
         
         self.assertEqual(cpu['A'], 0x1234 * 2)
@@ -53,7 +48,7 @@ class TestLinker(TestCase):
             set Y, [data + 1]
             set Z, [2 + data]
             dat 0
-            data: dat 0x1234, 0x5678, 0x9abc
+            :data dat 0x1234, 0x5678, 0x9abc
         '''), '''
             0000: 7c01 000d 7c11 000e 7c21 000f 7831 000d
             0008: 7841 000e 7851 000f 0000 1234 5678 9abc

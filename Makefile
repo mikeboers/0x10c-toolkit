@@ -10,3 +10,6 @@ clean:
 
 color: build
 	run examples/color_chart.dasm16
+
+test: build
+	nosetests

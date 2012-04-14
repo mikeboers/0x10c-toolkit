@@ -1,25 +1,29 @@
 import unittest
 import re
 
-from cpu import CPU
-import values
-import ops
-from link import Linker
-from asm import Assembler
+from dcpu16 import asm
+from dcpu16 import cpu
+from dcpu16 import link
+from dcpu16 import ops
+from dcpu16 import values
+
+from dcpu16.asm import Assembler
+from dcpu16.cpu import CPU
+from dcpu16.link import Linker
+
 
 class TestCase(unittest.TestCase):
     
     def assemble(self, source):
         assembler = Assembler()
-        assembler.loads(source)
-        return assembler.dumps()
+        assembler.load(source)
+        return assembler.assemble()
     
     def assemble_and_link(self, *sources):
         linker = Linker()
         for source in sources:
-            linker.loads(self.assemble(source))
-        linker.link()
-        return linker.dumps()
+            linker.load(self.assemble(source))
+        return linker.link()
     
     def normalize_hex(self, source):
         cleaned = []
@@ -53,7 +57,7 @@ class TestCase(unittest.TestCase):
     def assemble_and_run(self, *args):
         hex = self.assemble_and_link(*args)
         cpu = CPU()
-        cpu.loads(hex)
+        cpu.load(hex)
         cpu.run()
         return cpu
 

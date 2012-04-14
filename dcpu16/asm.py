@@ -54,6 +54,10 @@ class Assembler(object):
         self.global_symbols = []
         self.local_symbols = []
         self.symbol_references = []
+        self.constants = dict(
+            VIDEO=0x8000,
+            KEYBOARD=0x9000,
+        )
     
     def _get_args(self, line):
         args = []
@@ -89,6 +93,25 @@ class Assembler(object):
         def match(exp, line, flags=0):
             return re.match(r'\s*' + exp + r'\s*(?:,\s*|$)', line, re.I | flags)
     
+        # Stack values.
+        m = match(r'(POP|PEEK|PUSH)', line)
+        if m:
+            return values.Stack(dict(POP=0, PEEK=1, PUSH=2)[m.group(1).upper()]), line[m.end(0):]
+        
+        # Character literals.
+        m = match(r"('[^']*?')", line)
+        if m:
+            value = ast.literal_eval(m.group(1))
+            if len(value) != 1:
+                raise ValueError('character literal not of length 1: %r' % value)
+            return values.Literal(ord(value)), line[m.end(0):]
+    
+        # Strings
+        m = match(r'("[^"]*?")', line)
+        if m:
+            value = ast.literal_eval(m.group(1))
+            return StringValue(value), line[m.end(0):]
+        
         # Literal values.
         m = match(r'(' + NUMBER + ')', line)
         if m:
@@ -98,7 +121,7 @@ class Assembler(object):
         m = match(r'(' + REGISTER + ')', line)
         if m:
             return values.Register(parse_register(m.group(1))), line[m.end(0):]
-    
+        
         # Indirect registers and labels with offsets.
         m = match(r'\[([^\]]+)\]', line)
         if m:
@@ -141,12 +164,7 @@ class Assembler(object):
                 return values.Label(label, indirect=True, offset=offset), line[m.end(0):]
             else:
                 return values.Indirect(offset), line[m.end(0):]
-    
-        # Stack values.
-        m = match(r'(POP|PEEK|PUSH)', line)
-        if m:
-            return values.Stack(dict(POP=0, PEEK=1, PUSH=2)[m.group(1).upper()]), line[m.end(0):]
-            
+        
         # Basic (and offset) labels.
         m = match(r'(?:(' + NUMBER + ')\s*\+\s*)?' +
                   r'(\w+)' +
@@ -156,19 +174,7 @@ class Assembler(object):
             offset = parse_number(pre or '0') + parse_number(post or '0')
             return values.Label(label, indirect=False, offset=offset), line[m.end(0):]
     
-        # Character literals.
-        m = match(r"('[^']*?')", line)
-        if m:
-            value = ast.literal_eval(m.group(1))
-            if len(value) != 1:
-                raise ValueError('character literal not of length 1: %r' % value)
-            return values.Literal(ord(value)), line[m.end(0):]
-    
-        # Strings
-        m = match(r'("[^"]*?")', line)
-        if m:
-            value = ast.literal_eval(m.group(1))
-            return StringValue(value), line[m.end(0):]
+
     
         raise ValueError('could not extract values from %r' % line)
 

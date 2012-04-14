@@ -1,9 +1,5 @@
-from . import TestCase
+from . import *
 
-import values
-from cpu import CPU
-from asm import Assembler
-from link import Linker
 
 class TestSample(TestCase):
     
@@ -16,7 +12,7 @@ class TestSample(TestCase):
         '''
         
         cpu = CPU()
-        cpu.loads(source)
+        cpu.load(source)
         cpu.run()
         
         self.assertEquals(cpu[0xffff], 0x16)
