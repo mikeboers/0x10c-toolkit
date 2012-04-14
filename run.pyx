@@ -8,8 +8,6 @@ from cpu cimport CPU
 
 from mygl import glu, glut
 
-include "font.pyi"
-# include "font_data.pyi"
 
 DEF CHAR_W = 4
 DEF CHAR_H = 8
@@ -116,14 +114,20 @@ cdef class App(object):
     
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        
         glLoadIdentity()
-
         glScalef(self.pixel_scale, self.pixel_scale, self.pixel_scale)
+        glScalef(CHAR_W, CHAR_H, 1)
+        glTranslatef(0, SCREEN_ROWS, 0)
         
         cdef unsigned short i, c, x, y, bgx, fgx, cx, cy
         
         for x in range(SCREEN_COLS):
+            glPushMatrix()
+            
             for y in range(SCREEN_ROWS):
+                glTranslatef(0, -1, 0)
+                
                 i = y * SCREEN_COLS + x
                 c = self.cpu.memory[0x8000 + i]
                 if not c:
@@ -134,41 +138,34 @@ cdef class App(object):
                     glDisable(GL_TEXTURE_2D)
                     glColor3ub(colours[bgx][0], colours[bgx][1], colours[bgx][2])
                     glBegin(GL_QUADS)
-                    glVertex2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                    glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                    glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
-                    glVertex2i(x * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
+                    glVertex2i(0, 0)
+                    glVertex2i(1, 0)
+                    glVertex2i(1, 1)
+                    glVertex2i(0, 1)
                     glEnd()
                     glEnable(GL_TEXTURE_2D)
                     
-                
                 fgx = ((c & 0xf000) >> 12)
+                glColor3ub(colours[fgx][0], colours[fgx][1], colours[fgx][2])
                 
                 cx = (c & 0x7f) % 32
                 cy = (c & 0x7f) / 32
                 
-                glColor3ub(colours[fgx][0], colours[fgx][1], colours[fgx][2])
-                
-                
-
+                # Draw the character itself.
                 glBegin(GL_QUADS)
-                
                 glTexCoord2f((cx + 0) / 32.0, (cy + 1) / 4.0)
-                glVertex2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                
+                glVertex2i(0, 0)
                 glTexCoord2f((cx + 1) / 32.0, (cy + 1) / 4.0)
-                glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                
+                glVertex2i(1, 0)
                 glTexCoord2f((cx + 1) / 32.0, (cy + 0) / 4.0)
-                glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
-                
+                glVertex2i(1, 1)
                 glTexCoord2f((cx + 0) / 32.0, (cy + 0) / 4.0)
-                glVertex2i(x * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
-                
+                glVertex2i(0, 1)
                 glEnd()
                 
-        
-        
+            
+            glPopMatrix()
+            glTranslatef(1, 0, 0)
         
         glut.swapBuffers()
     
