@@ -1,7 +1,7 @@
 import sys
 import re
 import time
-
+from PIL import Image
 from c_opengl cimport *
 
 from cpu cimport CPU
@@ -9,6 +9,7 @@ from cpu cimport CPU
 from mygl import glu, glut
 
 include "font.pyi"
+# include "font_data.pyi"
 
 DEF CHAR_W = 4
 DEF CHAR_H = 8
@@ -49,10 +50,15 @@ cdef class App(object):
     cdef unsigned int width
     cdef unsigned int height
     
+    cdef unsigned int font_texture
+    
+    cdef unsigned int pixel_scale
+    
     def __init__(self):
         self.last_PC = -1
         self.last_time = 0
         self.keyboard_ring_i = 0
+        self.pixel_scale = 3
     
     def setup(self, infile):
         
@@ -62,8 +68,8 @@ cdef class App(object):
         glut.init(sys.argv)
         glut.initDisplayMode(glut.DOUBLE | glut.RGBA | glut.DEPTH)
     
-        self.width = CHAR_W * SCREEN_COLS
-        self.height = CHAR_H * SCREEN_ROWS
+        self.width = CHAR_W * SCREEN_COLS * self.pixel_scale
+        self.height = CHAR_H * SCREEN_ROWS * self.pixel_scale
         glut.initWindowSize(self.width, self.height)
         glut.createWindow('DCPU-16 Emulator')
 
@@ -73,6 +79,28 @@ cdef class App(object):
         glut.displayFunc(self.display)
         glut.idleFunc(self.idle)
         glut.keyboardFunc(self.keyboard)
+        
+        glGenTextures(1, &self.font_texture)
+        glBindTexture(GL_TEXTURE_2D, self.font_texture)
+        # print 'font_texture', self.font_texture
+        img = Image.open('font.png')
+        img = img.convert('RGBA')
+        img.putalpha(img.split()[0])
+        data = img.tostring()
+        cdef unsigned char *c_data = data
+        assert len(data) == 16384
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, 32 * 4, 4 * 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, c_data)
+        print glGetError()
+        glEnable(GL_TEXTURE_2D)
+        # glEnable(GL_COLOR_MATERIAL)
+        #glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        #glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        
+        
     
     def run(self):
         return glut.mainLoop()
@@ -89,8 +117,10 @@ cdef class App(object):
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
+
+        glScalef(self.pixel_scale, self.pixel_scale, self.pixel_scale)
         
-        cdef unsigned short i, c, x, y, bgx, fgx
+        cdef unsigned short i, c, x, y, bgx, fgx, cx, cy
         
         for x in range(SCREEN_COLS):
             for y in range(SCREEN_ROWS):
@@ -101,6 +131,7 @@ cdef class App(object):
                 
                 bgx = ((c & 0x0f00) >> 8)
                 if bgx:
+                    glDisable(GL_TEXTURE_2D)
                     glColor3ub(colours[bgx][0], colours[bgx][1], colours[bgx][2])
                     glBegin(GL_QUADS)
                     glVertex2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
@@ -108,16 +139,34 @@ cdef class App(object):
                     glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
                     glVertex2i(x * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
                     glEnd()
+                    glEnable(GL_TEXTURE_2D)
+                    
                 
                 fgx = ((c & 0xf000) >> 12)
                 
+                cx = (c & 0x7f) % 32
+                cy = (c & 0x7f) / 32
+                
                 glColor3ub(colours[fgx][0], colours[fgx][1], colours[fgx][2])
                 
-                glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-                glRasterPos2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
-                # glBitmap(4, 8, 0, 0, 0, 0, bitmap)
-                glBitmap(4, 8, 0, 0, 0, 0, font[c & 0xf7])
-                # glut.bitmapCharacter(glut.BITMAP_8_BY_13, c & 0x7f)
+                
+
+                glBegin(GL_QUADS)
+                
+                glTexCoord2f((cx + 0) / 32.0, (cy + 1) / 4.0)
+                glVertex2i(x * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
+                
+                glTexCoord2f((cx + 1) / 32.0, (cy + 1) / 4.0)
+                glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y - 1) * CHAR_H)
+                
+                glTexCoord2f((cx + 1) / 32.0, (cy + 0) / 4.0)
+                glVertex2i((x + 1) * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
+                
+                glTexCoord2f((cx + 0) / 32.0, (cy + 0) / 4.0)
+                glVertex2i(x * CHAR_W, (SCREEN_ROWS - y) * CHAR_H)
+                
+                glEnd()
+                
         
         
         
