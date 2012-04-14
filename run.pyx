@@ -50,13 +50,11 @@ cdef class App(object):
     
     cdef unsigned int font_texture
     
-    cdef unsigned int pixel_scale
     
     def __init__(self):
         self.last_PC = -1
         self.last_time = 0
         self.keyboard_ring_i = 0
-        self.pixel_scale = 3
     
     def setup(self, infile):
         
@@ -66,11 +64,11 @@ cdef class App(object):
         glut.init(sys.argv)
         glut.initDisplayMode(glut.DOUBLE | glut.RGBA | glut.DEPTH)
     
-        self.width = CHAR_W * SCREEN_COLS * self.pixel_scale
-        self.height = CHAR_H * SCREEN_ROWS * self.pixel_scale
+        self.width = CHAR_W * SCREEN_COLS * 3
+        self.height = CHAR_H * SCREEN_ROWS * 3
         glut.initWindowSize(self.width, self.height)
         glut.createWindow('DCPU-16 Emulator')
-
+        
         glClearColor(0, 0, 0, 1)
         
         glut.reshapeFunc(self.reshape)
@@ -106,18 +104,16 @@ cdef class App(object):
     def reshape(self, width, height):
         self.width = width
         self.height = height
-        glViewport(0, 0, width, height)
+        glViewport(0, 0, self.width, self.height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(0, width, 0, height, -100, 100)
+        glOrtho(0, SCREEN_COLS, 0, SCREEN_ROWS, -1, 10)
         glMatrixMode(GL_MODELVIEW)
     
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
         glLoadIdentity()
-        glScalef(self.pixel_scale, self.pixel_scale, self.pixel_scale)
-        glScalef(CHAR_W, CHAR_H, 1)
         glTranslatef(0, SCREEN_ROWS, 0)
         
         cdef unsigned short i, c, x, y, bgx, fgx, cx, cy
