@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
@@ -12,7 +12,7 @@ setup(
     author_email = "0x10c-toolkit@mikeboers.com",
     license = "BSD-3",
 
-    packages = find_packages(),
+    # packages = find_packages(),
     
     cmdclass = {'build_ext': build_ext},
     ext_modules = [

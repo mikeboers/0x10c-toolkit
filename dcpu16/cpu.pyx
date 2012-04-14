@@ -40,7 +40,9 @@ cdef class CPU(object):
     def __init__(self):
         self.skip_next = False
     
-    def loads(self, encoded, location=0):
+    def load(self, encoded, location=0):
+        if not isinstance(encoded, basestring):
+            encoded = ''.join(encoded)
         encoded = re.sub(r'[#;].*$', '', encoded, 0, re.M) # strip comments
         encoded = re.sub(r'^.*:', '', encoded, 0, re.M) # strip addresses
         encoded = re.sub(r'[^0-9a-f]', '', encoded) # strip non-hex

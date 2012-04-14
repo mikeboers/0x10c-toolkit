@@ -6,6 +6,7 @@ from c_opengl cimport *
 
 from .cpu cimport CPU
 from .mygl import glu, glut
+from . import utils
 
 
 DEF CHAR_W = 4
@@ -59,7 +60,7 @@ cdef class App(object):
         
         # Setup the CPU.
         self.cpu = CPU()
-        self.cpu.loads(infile.read())
+        self.cpu.load(infile)
         
         # Setup GLUT.
         glut.init(sys.argv)
@@ -193,14 +194,13 @@ cdef class App(object):
 def main():
 
     if len(sys.argv) == 1:
-        infile = sys.stdin
+        code = sys.stdin.read()
     elif len(sys.argv) == 2:
-        infile = open(sys.argv[1])
+        code = utils.get_hex_from_file(sys.argv[1])
     else:
         print 'usage: %s [infile]' % (sys.argv[0])
-
-
+    
     app = App()
-    app.setup(infile)
+    app.setup(code)
     app.run()
     app.cpu.dump()
