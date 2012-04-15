@@ -2,11 +2,11 @@ include "macros.pyi"
 
 import re
 
-cimport values
-import values
+cimport dcpu16.values as values
+import dcpu16.values as values
 
-cimport ops
-import ops
+cimport dcpu16.ops as ops
+import dcpu16.ops as ops
 
 
 # Early binding for speed.

@@ -1,6 +1,6 @@
 include "macros.pyi"
 
-from .cpu cimport CPU
+from dcpu16.cpu cimport CPU
 
 
 REGISTER_NAMES = '''

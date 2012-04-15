@@ -1,5 +1,5 @@
-cimport values
-cimport ops
+cimport dcpu16.values as values
+cimport dcpu16.ops as ops
 
 
 

@@ -4,7 +4,7 @@ import time
 from PIL import Image
 from c_opengl cimport *
 
-from .cpu cimport CPU
+from dcpu16.cpu cimport CPU
 from .mygl import glu, glut
 from . import utils
 

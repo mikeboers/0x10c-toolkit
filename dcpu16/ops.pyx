@@ -1,9 +1,9 @@
 include "macros.pyi"
 
-cimport values
-import values
+from dcpu16.cpu cimport CPU
 
-from cpu cimport CPU
+cimport dcpu16.values as values
+import dcpu16.values as values
 
 
 cdef class Base(object):

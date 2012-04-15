@@ -1,0 +1,5 @@
+
+softTabs = true
+tabSize = 4
+
+excludeFilesInBrowser = dcpu16/*.{c,pyc,so}

@@ -217,7 +217,12 @@ class Assembler(object):
             directive, args = m.groups()
             if directive.lower() == 'global':
                 self.global_names.add(args.strip())
-            return
+                return
+            if directive.lower() == 'define':
+                name, value = args.split(None, 1)
+                self.constants[name] = value
+                return
+            raise SyntaxError('unknown directive %r' % directive)
                 
         m = re.match(r'[a-zA-Z]{3}', line)
         if not m:

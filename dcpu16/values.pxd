@@ -1,4 +1,4 @@
-from cpu cimport CPU
+from dcpu16.cpu cimport CPU
 
 
 cdef class Base(object):
