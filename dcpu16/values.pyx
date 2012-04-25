@@ -21,7 +21,7 @@ REGISTER_NAMES = '''
 cdef class Base(object):
         
     def __init__(self, value):
-        self.value = value
+        self.value = value % 0x10000
     
     cpdef unsigned short get(self, CPU cpu) except *:
         raise RuntimeError('cannot eval %r' % self)
@@ -98,8 +98,10 @@ cdef class Literal(Base):
     
     
     def to_code(self):
-        if self.value <= 0x1f:
-            return 0x20 + self.value, ()
+        if self.value <= 0x1e:
+            return 0x21 + self.value, ()
+        if self.value == 0xffff:
+            return 0x20, ()
         return 0x1f, (self.value, )
 
 

@@ -3,12 +3,14 @@
 	http://www.reddit.com/r/dcpu16/comments/sqfre/rfe_dcpu16_11/
     
     √ a and b have swapped (not really nessesary to deal with)
+    √ O changed to EX
+    √ instructions parse differently
+    √ small literal range has changed
+    - stack values have collapsed
     - signed arithmatic
     - inturrupts
-    √ O changed to EX
     - different instructions
     - more instructions
-    √ instructions parse differently
 
 - local labels
     - labels starting with '.' are local

@@ -102,7 +102,7 @@ cdef class CPU(object):
             return values.Literal(self.get_next_word())
     
         if value >= 0x20 and value <= 0x3f:
-            return values.Literal(value - 0x20)
+            return values.Literal(value - 0x21) # Range from -1 to 30.
     
         raise ValueError('unknown value 0x%04x' % value)
     

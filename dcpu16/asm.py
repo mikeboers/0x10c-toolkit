@@ -70,18 +70,22 @@ class Assembler(object):
     
     def _get_arg(self, line):
     
-        NUMBER = r'(?:0x[a-f0-9 ]+|(?:0d)?[0-9 ]+|0o[0-7 ]+|0b[01 ]+)'
+        NUMBER = r'-(?:0x[a-f0-9 ]+|(?:0d)?[0-9 ]+|0o[0-7 ]+|0b[01 ]+)'
         def parse_number(raw):
             raw = re.sub(r'\s', '', raw).lower()
+            sign = 1
+            if raw.startswith('-'):
+                sign = -1
+                raw = raw[1:]
             if raw.startswith('0x'):
-                return int(raw[2:], 16)
+                return sign * int(raw[2:], 16)
             if raw.startswith('0d'):
-                return int(raw[2:], 10)
+                return sign * int(raw[2:], 10)
             if raw.startswith('0o'):
-                return int(raw[2:], 8)
+                return sign * int(raw[2:], 8)
             if raw.startswith('0b'):
-                return int(raw[2:], 2)
-            return int(raw)
+                return sign * int(raw[2:], 2)
+            return sign * int(raw)
     
         REGISTER = r'(?:[ABCXYZIJ]|PC|SP|EX)'
         def parse_register(raw):
@@ -137,7 +141,7 @@ class Assembler(object):
         label = None
         offset = 0
         
-        chunks = re.split(r'(\+|-)', this_value)
+        chunks = re.split(r'(?<=[^-])\s*(\+|-)', this_value)
         for i in range(0, len(chunks), 2):
             if not i:
                 operation = '+'
@@ -171,7 +175,7 @@ class Assembler(object):
                 continue
                 
             if not re.match(r'^\w+$', chunk):
-                raise ValueError('cannot identity chunk %r in value %r' % (chunk, this_value))
+                raise ValueError('cannot identify chunk %r in value %r' % (chunk, this_value))
             if label:
                 raise ValueError('cannot have two labels in value %r' % this_value)
                 

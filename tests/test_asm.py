@@ -22,7 +22,7 @@ class TestASM(TestCase):
             set I, 0B110
         '''), '''
             ; Manually verified with the disassembler.
-            0000: 8001 8421 8841 8c61 9081 94a1 98c1
+            0000: 8401 8821 8c41 9061 9481 98a1 9cc1
         ''')
     
     def test_label_case(self):

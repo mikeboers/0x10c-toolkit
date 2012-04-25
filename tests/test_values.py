@@ -4,14 +4,16 @@ from . import *
 class TestLiterals(TestCase):
     
     def test_short_code(self):
-        v = values.Literal(0)
+        v = values.Literal(0xffff)
         self.assertEqual(v.to_code(), (0x20, ()))
-        v = values.Literal(0x1f)
-        self.assertEqual(v.to_code(), (0x20 + 0x1f, ()))
+        v = values.Literal(0)
+        self.assertEqual(v.to_code(), (0x21, ()))
+        v = values.Literal(30)
+        self.assertEqual(v.to_code(), (0x21 + 30, ()))
     
     def test_long_code(self):
-        v = values.Literal(0x20)
-        self.assertEqual(v.to_code(), (0x1f, (0x20, )))
+        v = values.Literal(31)
+        self.assertEqual(v.to_code(), (0x1f, (31, )))
         v = values.Literal(0x1234)
         self.assertEqual(v.to_code(), (0x1f, (0x1234, )))
     
@@ -28,6 +30,24 @@ class TestLiterals(TestCase):
         
         # It doesn't set, because you CANT set literals; it fails silently.
         self.assertEqual(v.get(cpu), 0)
+    
+    def test_short_minus_one(self):
+        self.assertEqualHex(self.assemble('''
+            SET A, 0xffff
+        '''), '''
+            0000: ????
+        ''')
+    
+        cpu = self.assemble_and_run('''
+            SET A, 0xffff
+        ''')
+        self.assertEqual(cpu['A'], 0xffff)
+    
+        cpu = self.assemble_and_run('''
+            SET A, -1
+        ''')
+        self.assertEqual(cpu['A'], 0xffff)
+    
 
 
 class TestRegisters(TestCase):

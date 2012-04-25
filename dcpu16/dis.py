@@ -16,7 +16,7 @@ def main():
 
 
     cpu = CPU()
-    cpu.loads(infile.read())
+    cpu.load(infile.read())
 
     cpu.dump()
     print
