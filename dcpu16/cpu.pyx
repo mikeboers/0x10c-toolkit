@@ -128,8 +128,8 @@ cdef class CPU(object):
         
         cdef unsigned short word = self.get_next_word()
         cdef unsigned short opcode = word & 0xf
-        cdef unsigned short raw_a = (word >> 4) & 0x3f
-        cdef unsigned short raw_b = (word >> 10) & 0x3f    
+        cdef unsigned short raw_b = (word >> 4) & 0x3f
+        cdef unsigned short raw_a = (word >> 10) & 0x3f    
         
         cdef values.Base a, b
         if opcode:
@@ -138,42 +138,42 @@ cdef class CPU(object):
             b = self.get_op_value(raw_b)
             
             if opcode == 1:
-                return OpSET(a, b)
+                return OpSET(b, a)
             elif opcode == 2:
-                return OpADD(a, b)
+                return OpADD(b, a)
             elif opcode == 3:
-                return OpSUB(a, b)
+                return OpSUB(b, a)
             elif opcode == 4:
-                return OpMUL(a, b)
+                return OpMUL(b, a)
             elif opcode == 5:
-                return OpDIV(a, b)
+                return OpDIV(b, a)
             elif opcode == 6:
-                return OpMOD(a, b)
+                return OpMOD(b, a)
             elif opcode == 7:
-                return OpSHL(a, b)
+                return OpSHL(b, a)
             elif opcode == 8:
-                return OpSHR(a, b)
+                return OpSHR(b, a)
             elif opcode == 9:
-                return OpAND(a, b)
+                return OpAND(b, a)
             elif opcode == 0xa:
-                return OpBOR(a, b)
+                return OpBOR(b, a)
             elif opcode == 0xb:
-                return OpXOR(a, b)
+                return OpXOR(b, a)
             elif opcode == 0xc:
-                return OpIFE(a, b)
+                return OpIFE(b, a)
             elif opcode == 0xd:
-                return OpIFN(a, b)
+                return OpIFN(b, a)
             elif opcode == 0xe:
-                return OpIFG(a, b)
+                return OpIFG(b, a)
             elif opcode == 0xf:
-                return OpIFB(a, b)
+                return OpIFB(b, a)
             
         else:
-            a = self.get_op_value(raw_b)
-            if raw_a == 1:
+            a = self.get_op_value(raw_a)
+            if raw_b == 1:
                 return OpJSR(a)
 
-        raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_a, raw_b))
+        raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_b, raw_a))
             
             
         

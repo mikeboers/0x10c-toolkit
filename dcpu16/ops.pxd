@@ -9,11 +9,11 @@ cdef class Base(object):
 
 cdef class Basic(Base):
 
-    cdef public values.Base a
-    cdef public values.Base b
+    cdef public values.Base dst
+    cdef public values.Base src
 
 
 cdef class NonBasic(Base):
 
-    cdef public values.Base a
+    cdef public values.Base val
 

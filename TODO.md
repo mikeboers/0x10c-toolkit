@@ -2,7 +2,7 @@
 - pull in changes to the dcpu interface
 	http://www.reddit.com/r/dcpu16/comments/sqfre/rfe_dcpu16_11/
     
-    - a and b have swapped (not really nessesary to deal with)
+    √ a and b have swapped (not really nessesary to deal with)
     - signed arithmatic
     - inturrupts
     √ O changed to EX
