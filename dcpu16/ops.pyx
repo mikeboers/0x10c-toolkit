@@ -54,7 +54,7 @@ cdef class ADD(Basic):
         cdef unsigned short b = self.b.get(cpu)
         cdef unsigned int out = a + b
         self.a.set(cpu, out & 0xffff)
-        cpu.registers[REG_O] = 1 if out > 0xffff else 0
+        cpu.registers[REG_EX] = 1 if out > 0xffff else 0
 
 
 cdef class SUB(Basic):
@@ -62,7 +62,7 @@ cdef class SUB(Basic):
         cdef unsigned short a = self.a.get(cpu)
         cdef unsigned short b = self.b.get(cpu)
         self.a.set(cpu, (a - b) & 0xffff)
-        cpu.registers[REG_O] = 0xffff if b > a else 0
+        cpu.registers[REG_EX] = 0xffff if b > a else 0
     
     
 cdef class MUL(Basic):
@@ -71,7 +71,7 @@ cdef class MUL(Basic):
         cdef unsigned short b = self.b.get(cpu)
         cdef unsigned int out = a * b
         self.a.set(cpu, out & 0xffff)
-        cpu.registers[REG_O] = (out >> 16) & 0xffff
+        cpu.registers[REG_EX] = (out >> 16) & 0xffff
     
     
 cdef class DIV(Basic):
@@ -80,10 +80,10 @@ cdef class DIV(Basic):
         cdef unsigned short b = self.b.get(cpu)
         if not b:
             self.a.set(cpu, 0)
-            cpu.registers[REG_O] = 0
+            cpu.registers[REG_EX] = 0
         else:
             self.a.set(cpu, a / b)
-            cpu.registers[REG_O] = ((a << 16) / b) & 0xffff
+            cpu.registers[REG_EX] = ((a << 16) / b) & 0xffff
             
     
     
@@ -101,7 +101,7 @@ cdef class SHL(Basic):
     cdef run(self, CPU cpu):
         cdef unsigned short a = self.a.get(cpu)
         cdef unsigned short b = self.b.get(cpu)
-        cpu.registers[REG_O] = ((a << b) >> 16 ) & 0xffff
+        cpu.registers[REG_EX] = ((a << b) >> 16 ) & 0xffff
         self.a.set(cpu, (a << b) & 0xffff)
         
         
@@ -109,7 +109,7 @@ cdef class SHR(Basic):
     cdef run(self, CPU cpu):
         cdef unsigned short a = self.a.get(cpu)
         cdef unsigned short b = self.b.get(cpu)
-        cpu.registers[REG_O] = ((a << 16) >> b) & 0xffff
+        cpu.registers[REG_EX] = ((a << 16) >> b) & 0xffff
         self.a.set(cpu, a >> b)
         
         

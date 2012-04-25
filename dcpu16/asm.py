@@ -42,7 +42,7 @@ class StringValue(values.Base):
         self.string = value
 
 register_to_code = dict((x, i) for i, x in enumerate('''
-    A B C X Y Z I J SP PC O
+    A B C X Y Z I J SP PC EX
 '''.strip().split()))
 
 
@@ -83,7 +83,7 @@ class Assembler(object):
                 return int(raw[2:], 2)
             return int(raw)
     
-        REGISTER = r'(?:[ABCXYZIJ]|PC|SP|O)'
+        REGISTER = r'(?:[ABCXYZIJ]|PC|SP|EX)'
         def parse_register(raw):
             try:
                 return register_to_code[raw.upper()]

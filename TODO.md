@@ -1,8 +1,40 @@
+
+- pull in changes to the dcpu interface
+	http://www.reddit.com/r/dcpu16/comments/sqfre/rfe_dcpu16_11/
+    
+    - a and b have swapped (not really nessesary to deal with)
+    - signed arithmatic
+    - inturrupts
+    √ O changed to EX
+    - different instructions
+    - more instructions
+    - instructions parse differently
+
+- local labels
+    - labels starting with '.' are local
+    - they prefix themselves with the last non-local label
+
+
 - pull in examples from https://github.com/jtauber/DCPU-16-Examples
 - look for more TODOs http://dwilliamson.github.com/
 - https://github.com/noname22/dtools/
 - http://pastie.org/pastes/3772655/text?key=xw0dmiwx5khzoagoemyww
 - http://0x10cwiki.com/wiki/DCPU-16#cite_note-leakspec-1
+- http://www.dcpu16apps.com/Home/App/43
+- https://github.com/gibbed/0x10c-Notes/blob/master/VirtualMonitor.txt
+- http://vps.thomascomputerindustries.com/logs/freenode/0x10c-dev/2012-04-17
+    Search for "_notch". The recommendations he spoke of on github (that he
+    *will* implement) are https://gist.github.com/2341455
+    
+    - "Yeah, I think I will do the EGA way. 16 colors onscreen, 64 in total, editable palette"
+    - 60Hz timer interrupt
+- http://fingswotidun.com/dcpu16/pac.html
+    - http://fingswotidun.com/dcpu16/GraphicsMode1.png
+    - http://i.imgur.com/JGoQe.png
+    - http://fingswotidun.com/dcpu16/sprites.txt
+
+- official emulator
+    http://dcpu.com/highnerd/
 
 - incorperate normal assembler syntax
 	- appears to be intel/MASM/NASM syntax
@@ -54,6 +86,7 @@
 	.macro name -> .mend
 	.fill count value
 	.zero count
+    .org, .inc, .incbin, .reserve
 
 - entrypoints
 	- all equal SECTIONS get assembled next to each other

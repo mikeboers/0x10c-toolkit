@@ -94,7 +94,7 @@ cdef class CPU(object):
         if value == 0x1c:
             return values.Register(REG_PC)
         if value == 0x1d:
-            return values.Register(REG_O)
+            return values.Register(REG_EX)
     
         if value == 0x1e:
             return values.Indirect(self.get_next_word())
@@ -186,12 +186,12 @@ cdef class CPU(object):
                 if counter % 16 == 0:
                     if counter:
                         print
-                    print ';', ' '.join(['%4s' % x for x in '# PC SP O A B C X Y Z I J'.split()])
+                    print ';', ' '.join(['%4s' % x for x in '# PC SP EX A B C X Y Z I J'.split()])
                     print ';', '-----' * 12
             counter += 1
             if debug:
                 print '; %4x' % (counter - 1,),
-                print ' '.join(['%4x' % x for x in [self.registers[REG_PC], self.registers[REG_SP], self.registers[REG_O]]]),
+                print ' '.join(['%4x' % x for x in [self.registers[REG_PC], self.registers[REG_SP], self.registers[REG_EX]]]),
                 print ' '.join(['%4x' % self.registers[x] for x in xrange(8)])
             self.run_one()
         return counter
@@ -205,13 +205,13 @@ cdef class CPU(object):
         return True
     
     def __getitem__(self, name):
-        registers = 'A B C X Y Z I J SP PC O'.split()
+        registers = 'A B C X Y Z I J SP PC EX'.split()
         if name in registers:
             return self.registers[registers.index(name)]
         return self.memory[name]
     
     def __setitem__(self, name, value):
-        registers = 'A B C X Y Z I J SP PC O'.split()
+        registers = 'A B C X Y Z I J SP PC EX'.split()
         if name in registers:
             self.registers[registers.index(name)] = value
         self.memory[name] = value

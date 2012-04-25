@@ -9,7 +9,7 @@ class TestADD(TestCase):
             add A, 2
         ''')
         self.assertEqual(cpu['A'], 3)
-        self.assertEqual(cpu['O'], 0)
+        self.assertEqual(cpu['EX'], 0)
     
     def test_overflow(self):
         cpu = self.assemble_and_run('''
@@ -17,7 +17,7 @@ class TestADD(TestCase):
             add A, 0x2345
         ''')
         self.assertEqual(cpu['A'], 0x1468)
-        self.assertEqual(cpu['O'], 1)
+        self.assertEqual(cpu['EX'], 1)
     
     def test_32bit(self):
         cpu = self.assemble_and_run('''
@@ -26,7 +26,7 @@ class TestADD(TestCase):
             set Y, two
             
             add [1 + X], [1 + Y]
-            add [X], O
+            add [X], EX
             add [X], [Y]
             
         ; stop
@@ -52,7 +52,7 @@ class TestMUL(TestCase):
             mul A, 4
         ''')
         self.assertEqual(cpu['A'], 12)
-        self.assertEqual(cpu['O'], 0)
+        self.assertEqual(cpu['EX'], 0)
     
     def test_overflow(self):
         cpu = self.assemble_and_run('''
@@ -60,7 +60,7 @@ class TestMUL(TestCase):
             mul A, 0x2345
         ''')
         self.assertEqual(cpu['A'], 0x0404)
-        self.assertEqual(cpu['O'], 0x0282)
+        self.assertEqual(cpu['EX'], 0x0282)
         
     def test_32bit(self):
         cpu = self.assemble_and_run('''
@@ -73,7 +73,7 @@ class TestMUL(TestCase):
             mul A, [Y]
             add [X], A
             mul [1 + X], [1 + Y]
-            add [X], O
+            add [X], EX
             
         ; stop
             dat 0

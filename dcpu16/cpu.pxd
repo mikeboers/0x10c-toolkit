@@ -5,7 +5,7 @@ cimport dcpu16.ops as ops
 
 cdef class CPU(object):
     
-    # The 8 general registers, then SP, PC, and O.
+    # The 8 general registers, then SP, PC, and EX.
     cdef unsigned short registers[11]
     cdef unsigned short memory[0x10000]
     
