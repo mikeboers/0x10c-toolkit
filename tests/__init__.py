@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
         cleaned = []
         
         for line in source.splitlines():
-            m = re.match(r'^\s*(:\w+)?(.*:)?([0-9a-fA-F \t]*)([;#].*)?$', line)
+            m = re.match(r'^\s*(:\w+)?(.*:)?([0-9a-fA-F? \t]*)([;#].*)?$', line)
             if not m:
                 print 'could not parse line %r' % line
                 exit(1)
@@ -52,7 +52,13 @@ class TestCase(unittest.TestCase):
         return ''.join(out)
         
     def assertEqualHex(self, one, two, *args):
-        self.assertEqual(self.normalize_hex(one), self.normalize_hex(two), *args)
+        one = self.normalize_hex(one)
+        two = self.normalize_hex(two)
+        if len(one) != len(two):
+            self.assert_(False, '%r != %r' % (one, two))
+        for a, b in zip(one, two):
+            if a != '?' and b != '?' and a != b:
+                self.assert_(False, '%r != %r' % (one, two))
     
     def assemble_and_run(self, *args):
         hex = self.assemble_and_link(*args)

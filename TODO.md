@@ -8,7 +8,7 @@
     √ O changed to EX
     - different instructions
     - more instructions
-    - instructions parse differently
+    √ instructions parse differently
 
 - local labels
     - labels starting with '.' are local

@@ -29,7 +29,7 @@ class TestLinker(TestCase):
         
         hex = self.assemble_and_link(a, b)
         self.assertEqualHex(hex, '''
-            0000: 7801 0008 7c10 0006 7dc1 0004 0002 61c1
+            0000: ???? 0008 ???? 0006 ???? 0004 0002 ????
             0008: 1234
         ''')
         
@@ -50,8 +50,8 @@ class TestLinker(TestCase):
             dat 0
             :data dat 0x1234, 0x5678, 0x9abc
         '''), '''
-            0000: 7c01 000d 7c11 000e 7c21 000f 7831 000d
-            0008: 7841 000e 7851 000f 0000 1234 5678 9abc
+            0000: ???? 000d ???? 000e ???? 000f ???? 000d
+            0008: ???? 000e ???? 000f 0000 1234 5678 9abc
         ''')
         
         

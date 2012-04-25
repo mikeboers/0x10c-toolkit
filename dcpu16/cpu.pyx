@@ -127,8 +127,8 @@ cdef class CPU(object):
     cdef ops.Base get_next_instruction(self):
         
         cdef unsigned short word = self.get_next_word()
-        cdef unsigned short opcode = word & 0xf
-        cdef unsigned short raw_b = (word >> 4) & 0x3f
+        cdef unsigned short opcode = word & 0x1f
+        cdef unsigned short raw_b = (word >> 5) & 0x1f
         cdef unsigned short raw_a = (word >> 10) & 0x3f    
         
         cdef values.Base a, b

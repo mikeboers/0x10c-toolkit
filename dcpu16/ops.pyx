@@ -26,7 +26,7 @@ cdef class Basic(Base):
         dst, dst_extra = self.dst.to_code()
         src, src_extra = self.src.to_code()
         # print self.__class__.__name__ + '.to_code() ->', opcode, src, dst
-        return (opcode + ((dst & 0x3f) << 4) + ((src & 0x3f) << 10) ,) + src_extra + dst_extra
+        return (opcode + ((dst & 0x3f) << 5) + ((src & 0x3f) << 10) ,) + src_extra + dst_extra
 
 
 cdef class NonBasic(Base):
@@ -40,7 +40,7 @@ cdef class NonBasic(Base):
     def to_code(self):
         opcode = nonbasic_cls_to_code[self.__class__]
         val, val_extra = self.val.to_code()
-        return (((opcode & 0x3f) << 4) + ((val & 0x3f) << 10) ,) + val_extra
+        return (((opcode & 0x3f) << 5) + ((val & 0x3f) << 10) ,) + val_extra
 
 
 cdef class SET(Basic):
