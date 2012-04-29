@@ -9,7 +9,7 @@ UPDATES TO SPEC
 √ O changed to EX
 √ instructions parse differently
 √ small literal range has changed
-
+√ stack values have collapsed
 
 - signed arithmatic
 - overflow arithmatic

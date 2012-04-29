@@ -200,7 +200,7 @@ cdef class StackPick(Base):
         if self.value:
             return 0x1a, (self.value, )
         else:
-            return 0x19
+            return 0x19, ()
     
     cpdef unsigned short get(self, CPU cpu):
         cdef unsigned short offset = (cpu.registers[REG_SP] + self.value) % 0x10000
