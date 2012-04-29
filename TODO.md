@@ -1,21 +1,40 @@
 
-- pull in changes to the dcpu interface
-	http://www.reddit.com/r/dcpu16/comments/sqfre/rfe_dcpu16_11/
+UPDATES TO SPEC
+---------------
+
+- http://dcpu.com/highnerd/rc_1/
+- http://pastebin.com/raw.php?i=Q4JvQvnM
     
-    √ a and b have swapped (not really nessesary to deal with)
-    √ O changed to EX
-    √ instructions parse differently
-    √ small literal range has changed
-    - stack values have collapsed
-    - signed arithmatic
-    - inturrupts
-    - different instructions
-    - more instructions
+√ a and b have swapped (not really nessesary to deal with)
+√ O changed to EX
+√ instructions parse differently
+√ small literal range has changed
+
+
+- signed arithmatic
+- overflow arithmatic
+- inturrupts
+- more instructions
+- hardware
+    - display http://dcpu.com/highnerd/rc_1/lem1802.txt
+    - keyboard http://dcpu.com/highnerd/rc_1/keyboard.txt
+    - clock http://dcpu.com/highnerd/rc_1/clock.txt
+
+
+- What to do in stack corner cases:
+    - What should this do: `add PUSH POP`
+
+
+OTHER
+-----
+
 
 - local labels
     - labels starting with '.' are local
     - they prefix themselves with the last non-local label
 
+- make sure that we increment PC at the right place
+    http://www.reddit.com/r/dcpu16/comments/sripk/rfe_dcpu16_v13/c4gdb9a
 
 - pull in examples from https://github.com/jtauber/DCPU-16-Examples
 - look for more TODOs http://dwilliamson.github.com/

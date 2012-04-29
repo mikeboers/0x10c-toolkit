@@ -32,7 +32,7 @@ class OpDAT(object):
             else:
                 raise TypeError('DAT can only take Literal values')
     
-    def to_code(self):
+    def hex(self):
         return self.data
 
 
@@ -41,7 +41,7 @@ class StringValue(values.Base):
     def __init__(self, value):
         self.string = value
 
-register_to_code = dict((x, i) for i, x in enumerate('''
+register_to_hex = dict((x, i) for i, x in enumerate('''
     A B C X Y Z I J SP PC EX
 '''.strip().split()))
 
@@ -90,7 +90,7 @@ class Assembler(object):
         REGISTER = r'(?:[ABCXYZIJ]|PC|SP|EX)'
         def parse_register(raw):
             try:
-                return register_to_code[raw.upper()]
+                return register_to_hex[raw.upper()]
             except KeyError:
                 raise ValueError('not a register: %r' % raw)
     
@@ -100,7 +100,10 @@ class Assembler(object):
         # Stack values.
         m = match(r'(POP|PEEK|PUSH)', line)
         if m:
-            return values.Stack(dict(POP=0, PEEK=1, PUSH=2)[m.group(1).upper()]), line[m.end(0):]
+            return dict(POP=values.StackPop, PEEK=values.StackPick, PUSH=values.StackPush)[m.group(1).upper()](), line[m.end(0):]
+        m = match(r'PICK\s+(\d+)', line)
+        if m:
+            return values.StackPick(int(m.group(1))), line[m.end(0):]
         
         # Character literals.
         m = match(r"('[^']*?')", line)
@@ -263,7 +266,7 @@ class Assembler(object):
                     self.local_symbols.append((name, len(raw_code)))
                 
             else:
-                raw_code.extend(op.to_code())
+                raw_code.extend(op.hex())
         
         code = []
         for x in raw_code:

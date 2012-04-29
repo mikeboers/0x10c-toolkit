@@ -14,5 +14,5 @@ cdef class CPU(object):
     cpdef run_one(self)
     cdef unsigned short get_next_word(self)
     cdef ops.Base get_next_instruction(self)
-    cdef values.Base get_op_value(self, unsigned short value)
+    cdef values.Base get_op_value(self, unsigned short value, bint is_dst)
     

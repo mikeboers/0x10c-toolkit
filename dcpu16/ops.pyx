@@ -21,11 +21,11 @@ cdef class Basic(Base):
     def __repr__(self):
         return '%s %r, %r' % (self.__class__.__name__, self.dst, self.src)
     
-    def to_code(self):
-        opcode = basic_cls_to_code[self.__class__]
-        dst, dst_extra = self.dst.to_code()
-        src, src_extra = self.src.to_code()
-        # print self.__class__.__name__ + '.to_code() ->', opcode, src, dst
+    def hex(self):
+        opcode = basic_cls_to_hex[self.__class__]
+        dst, dst_extra = self.dst.hex()
+        src, src_extra = self.src.hex()
+        # print self.__class__.__name__ + '.hex() ->', opcode, src, dst
         return (opcode + ((dst & 0x3f) << 5) + ((src & 0x3f) << 10) ,) + src_extra + dst_extra
 
 
@@ -37,9 +37,9 @@ cdef class NonBasic(Base):
     def __repr__(self):
         return '%s %r' % (self.__class__.__name__, self.val)
     
-    def to_code(self):
-        opcode = nonbasic_cls_to_code[self.__class__]
-        val, val_extra = self.val.to_code()
+    def hex(self):
+        opcode = nonbasic_cls_to_hex[self.__class__]
+        val, val_extra = self.val.hex()
         return (((opcode & 0x3f) << 5) + ((val & 0x3f) << 10) ,) + val_extra
 
 
@@ -171,7 +171,7 @@ basic_code_to_cls = dict(enumerate([
 
 basic_name_to_cls = dict((cls.__name__, cls) for cls in basic_code_to_cls.itervalues() if cls)
 
-basic_cls_to_code = dict(reversed(x) for x in basic_code_to_cls.iteritems() if x[1])
+basic_cls_to_hex = dict(reversed(x) for x in basic_code_to_cls.iteritems() if x[1])
 
 nonbasic_code_to_cls = dict(enumerate([
     None, JSR
@@ -179,4 +179,4 @@ nonbasic_code_to_cls = dict(enumerate([
 
 nonbasic_name_to_cls = dict((cls.__name__, cls) for cls in nonbasic_code_to_cls.itervalues() if cls)
 
-nonbasic_cls_to_code = dict(reversed(x) for x in nonbasic_code_to_cls.iteritems() if x[1])
+nonbasic_cls_to_hex = dict(reversed(x) for x in nonbasic_code_to_cls.iteritems() if x[1])

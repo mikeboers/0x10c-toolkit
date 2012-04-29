@@ -27,6 +27,12 @@ cdef object OpIFG = ops.IFG
 cdef object OpIFB = ops.IFB
 cdef object OpJSR = ops.JSR
 
+cdef object RegisterValue = values.Register
+cdef object LiteralValue = values.Literal
+cdef object IndirectValue = values.Indirect
+cdef object PushValue = values.StackPush
+cdef object PopValue = values.StackPop
+cdef object PickValue = values.StackPick
 
 
 
@@ -68,41 +74,44 @@ cdef class CPU(object):
         self.registers[REG_PC] = PC + 1
         return word
     
-    cdef values.Base get_op_value(self, unsigned short value):
+    cdef values.Base get_op_value(self, unsigned short value, bint is_dst):
     
         # Registers.
         if value <= 0x07:
-            return values.Register(value)
+            return RegisterValue(value)
     
         # Indirect registers.
         if value <= 0x0f:
-            return values.Register(value - 0x08, indirect=True)
+            return RegisterValue(value - 0x08, indirect=True)
     
         # Indirect register with offset.
         if value <= 0x17:
-            return values.Register(value - 0x10, indirect=True, offset=self.get_next_word())
+            return RegisterValue(value - 0x10, indirect=True, offset=self.get_next_word())
     
         if value == 0x18:
-            return values.Stack(STACK_POP)
+            if is_dst:
+                return PushValue()
+            else:
+                return PopValue()
         if value == 0x19:
-            return values.Stack(STACK_PEEK)
+            return PickValue(0)
         if value == 0x1a:
-            return values.Stack(STACK_PUSH)
+            return PickValue(self.get_next_word())
         
         if value == 0x1b:
-            return values.Register(REG_SP)
+            return RegisterValue(REG_SP)
         if value == 0x1c:
-            return values.Register(REG_PC)
+            return RegisterValue(REG_PC)
         if value == 0x1d:
-            return values.Register(REG_EX)
+            return RegisterValue(REG_EX)
     
         if value == 0x1e:
-            return values.Indirect(self.get_next_word())
+            return IndirectValue(self.get_next_word())
         if value == 0x1f:
-            return values.Literal(self.get_next_word())
+            return LiteralValue(self.get_next_word())
     
         if value >= 0x20 and value <= 0x3f:
-            return values.Literal(value - 0x21) # Range from -1 to 30.
+            return LiteralValue(value - 0x21) # Range from -1 to 30.
     
         raise ValueError('unknown value 0x%04x' % value)
     
@@ -122,7 +131,7 @@ cdef class CPU(object):
         cdef ops.Base op = self.get_next_instruction()        
         end_PC = self.registers[REG_PC]
         dump = ' '.join('%04x' % x for x in self.memory[start_PC:end_PC])
-        print '%-30r; %04x: %s' % (op, start_PC, dump)
+        print '%-30r; %04x: %s' % (op.asm(), start_PC, dump)
     
     cdef ops.Base get_next_instruction(self):
         
@@ -131,47 +140,47 @@ cdef class CPU(object):
         cdef unsigned short raw_b = (word >> 5) & 0x1f
         cdef unsigned short raw_a = (word >> 10) & 0x3f    
         
-        cdef values.Base a, b
+        cdef values.Base dst, src, val
         if opcode:
             
-            a = self.get_op_value(raw_a)
-            b = self.get_op_value(raw_b)
+            src = self.get_op_value(raw_a, False)
+            dst = self.get_op_value(raw_b, True)
             
             if opcode == 1:
-                return OpSET(b, a)
+                return OpSET(dst, src)
             elif opcode == 2:
-                return OpADD(b, a)
+                return OpADD(dst, src)
             elif opcode == 3:
-                return OpSUB(b, a)
+                return OpSUB(dst, src)
             elif opcode == 4:
-                return OpMUL(b, a)
+                return OpMUL(dst, src)
             elif opcode == 5:
-                return OpDIV(b, a)
+                return OpDIV(dst, src)
             elif opcode == 6:
-                return OpMOD(b, a)
+                return OpMOD(dst, src)
             elif opcode == 7:
-                return OpSHL(b, a)
+                return OpSHL(dst, src)
             elif opcode == 8:
-                return OpSHR(b, a)
+                return OpSHR(dst, src)
             elif opcode == 9:
-                return OpAND(b, a)
+                return OpAND(dst, src)
             elif opcode == 0xa:
-                return OpBOR(b, a)
+                return OpBOR(dst, src)
             elif opcode == 0xb:
-                return OpXOR(b, a)
+                return OpXOR(dst, src)
             elif opcode == 0xc:
-                return OpIFE(b, a)
+                return OpIFE(dst, src)
             elif opcode == 0xd:
-                return OpIFN(b, a)
+                return OpIFN(dst, src)
             elif opcode == 0xe:
-                return OpIFG(b, a)
+                return OpIFG(dst, src)
             elif opcode == 0xf:
-                return OpIFB(b, a)
+                return OpIFB(dst, src)
             
         else:
-            a = self.get_op_value(raw_a)
+            val = self.get_op_value(raw_a, False)
             if raw_b == 1:
-                return OpJSR(a)
+                return OpJSR(val)
 
         raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_b, raw_a))
             

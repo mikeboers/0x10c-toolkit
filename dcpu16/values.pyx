@@ -20,7 +20,7 @@ REGISTER_NAMES = '''
 
 cdef class Base(object):
         
-    def __init__(self, value):
+    def __init__(self, value=0):
         self.value = value % 0x10000
     
     cpdef unsigned short get(self, CPU cpu) except *:
@@ -30,9 +30,12 @@ cdef class Base(object):
         raise TypeError('cannot save to %r' % self)
     
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.value)
+        return '<%s %r>' % (self.__class__.__name__, self.value)
     
-    def to_code(self):
+    def asm(self):
+        raise NotImplementedError(self.__class__.__name__)
+    
+    def hex(self):
         raise NotImplementedError(self.__class__.__name__)
 
 
@@ -62,7 +65,7 @@ cdef class Register(Base):
         else:
             cpu.registers[self.value] = value
     
-    def __repr__(self):
+    def asm(self):
         out = REGISTER_NAMES[self.value]
         if self.offset:
             out = '0x%x + %s' % (self.offset, out)
@@ -72,7 +75,7 @@ cdef class Register(Base):
             out = '[%s]' % out
         return out
     
-    def to_code(self):
+    def hex(self):
         if self.value >= 0x8:
             return self.value + 0x1b - 0x8, ()
         if self.label:
@@ -89,7 +92,7 @@ cdef class Literal(Base):
     cpdef unsigned short get(self, CPU cpu):
         return self.value
     
-    def __repr__(self):
+    def asm(self):
         return '0x%x' % self.value
     
     cpdef unsigned char set(self, CPU cpu, unsigned short value):
@@ -97,7 +100,7 @@ cdef class Literal(Base):
         pass
     
     
-    def to_code(self):
+    def hex(self):
         if self.value <= 0x1e:
             return 0x21 + self.value, ()
         if self.value == 0xffff:
@@ -110,13 +113,13 @@ cdef class Indirect(Base):
     cpdef unsigned short get(self, CPU cpu):
         return cpu.memory[self.value]
         
-    def __repr__(self):
+    def asm(self):
         return '[0x%x]' % self.value
         
     cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1:
         cpu.memory[self.value] = value
     
-    def to_code(self):
+    def hex(self):
         return 0x1e, (self.value, )
 
 
@@ -133,7 +136,7 @@ cdef class Label(Base):
         self.offset = offset
         self.subtract = subtract
     
-    def __repr__(self):
+    def asm(self):
         out = self.label
         if self.offset:
             out = '0x%x + %s' % (self.offset, out)
@@ -141,7 +144,7 @@ cdef class Label(Base):
             out = '[%s]' % out
         return out
     
-    def to_code(self):
+    def hex(self):
         if self.indirect:
             return 0x1e, (self, )
         else:
@@ -158,31 +161,52 @@ cdef class Label(Base):
             return False
 
 
-cdef class Stack(Base):
+cdef class StackPush(Base):
 
-    def __repr__(self):
-        if self.value == STACK_PUSH:
-            return 'PUSH'
-        elif self.value == STACK_POP:
-            return 'POP'
+    def asm(self):
+        return 'PUSH'
+    
+    def hex(self):
+        return 0x18, ()
+    
+    cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1:
+        cpu.registers[REG_SP] = (cpu.registers[REG_SP] - 1) % 0x10000
+        cpu.memory[cpu.registers[REG_SP]] = value
+
+
+cdef class StackPop(Base):
+    
+    def asm(self):
+        return 'POP'
+    
+    def hex(self):
+        return 0x18, ()
+    
+    cpdef unsigned short get(self, CPU cpu):
+        val = cpu.memory[cpu.registers[REG_SP]]
+        cpu.registers[REG_SP] = (cpu.registers[REG_SP] + 1) % 0x10000
+        return val
+
+
+cdef class StackPick(Base):
+
+    def asm(self):
+        if self.value:
+            return 'PICK 0x%x' % self.value
         else:
             return 'PEEK'
     
-    cpdef unsigned short get(self, CPU cpu):
-        if self.value == STACK_PUSH:
-            cpu.registers[REG_SP] = (cpu.registers[REG_SP] - 1) % 0x10000
-            return cpu.memory[cpu.registers[REG_SP]]
-        elif self.value == STACK_POP:
-            val = cpu.memory[cpu.registers[REG_SP]]
-            cpu.registers[REG_SP] = (cpu.registers[REG_SP] + 1) % 0x10000
-            return val
+    def hex(self):
+        if self.value:
+            return 0x1a, (self.value, )
         else:
-            return cpu.memory[cpu.registers[REG_SP]]
+            return 0x19
     
-    def to_code(self):
-        if self.value == STACK_POP:
-            return 0x18, ()
-        elif self.value == STACK_PEEK:
-            return 0x19, ()
-        else:
-            return 0x1a, ()
+    cpdef unsigned short get(self, CPU cpu):
+        cdef unsigned short offset = (cpu.registers[REG_SP] + self.value) % 0x10000
+        return cpu.memory[offset]
+        
+    cpdef unsigned char set(self, CPU cpu, unsigned short value) except 1:
+        cdef unsigned short offset = (cpu.registers[REG_SP] + self.value) % 0x10000
+        cpu.memory[offset] = value
+
