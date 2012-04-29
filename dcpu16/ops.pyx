@@ -165,17 +165,33 @@ cdef class JSR(NonBasic):
 
 
 
-basic_code_to_cls = dict(enumerate([
-    None, SET, ADD, SUB, MUL, DIV, MOD, SHL, SHR, AND, BOR, XOR, IFE, IFN, IFG, IFB
-]))
+basic_code_to_cls = {
+    0: None,
+    OP_SET: SET,
+    OP_ADD: ADD,
+    OP_SUB: SUB,
+    OP_MUL: MUL,
+    OP_DIV: DIV,
+    OP_MOD: MOD,
+    OP_SHL: SHL,
+    OP_SHR: SHR,
+    OP_AND: AND,
+    OP_BOR: BOR,
+    OP_XOR: XOR,
+    OP_IFE: IFE,
+    OP_IFN: IFN,
+    OP_IFG: IFG,
+    OP_IFB: IFB
+}
 
 basic_name_to_cls = dict((cls.__name__, cls) for cls in basic_code_to_cls.itervalues() if cls)
 
 basic_cls_to_hex = dict(reversed(x) for x in basic_code_to_cls.iteritems() if x[1])
 
-nonbasic_code_to_cls = dict(enumerate([
-    None, JSR
-]))
+nonbasic_code_to_cls = {
+    0: None,
+    OP_JSR: JSR
+}
 
 nonbasic_name_to_cls = dict((cls.__name__, cls) for cls in nonbasic_code_to_cls.itervalues() if cls)
 

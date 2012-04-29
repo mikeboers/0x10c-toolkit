@@ -146,40 +146,57 @@ cdef class CPU(object):
             src = self.get_op_value(raw_a, False)
             dst = self.get_op_value(raw_b, True)
             
-            if opcode == 1:
+            if opcode == OP_SET:
                 return OpSET(dst, src)
-            elif opcode == 2:
+            elif opcode == OP_ADD:
                 return OpADD(dst, src)
-            elif opcode == 3:
+            elif opcode == OP_SUB:
                 return OpSUB(dst, src)
-            elif opcode == 4:
+            elif opcode == OP_MUL:
                 return OpMUL(dst, src)
-            elif opcode == 5:
+            # MLI
+            elif opcode == OP_DIV:
                 return OpDIV(dst, src)
-            elif opcode == 6:
+            # DVI
+            elif opcode == OP_MOD:
                 return OpMOD(dst, src)
-            elif opcode == 7:
-                return OpSHL(dst, src)
-            elif opcode == 8:
-                return OpSHR(dst, src)
-            elif opcode == 9:
+            # MDI
+            elif opcode == OP_AND:
                 return OpAND(dst, src)
-            elif opcode == 0xa:
+            elif opcode == OP_BOR:
                 return OpBOR(dst, src)
-            elif opcode == 0xb:
+            elif opcode == OP_XOR:
                 return OpXOR(dst, src)
-            elif opcode == 0xc:
-                return OpIFE(dst, src)
-            elif opcode == 0xd:
-                return OpIFN(dst, src)
-            elif opcode == 0xe:
-                return OpIFG(dst, src)
-            elif opcode == 0xf:
+
+            elif opcode == OP_SHR:
+                return OpSHR(dst, src)
+            # ASR
+            elif opcode == OP_SHL:
+                return OpSHL(dst, src)
+            
+            elif opcode == OP_IFB:
                 return OpIFB(dst, src)
+            # IFC
+            elif opcode == OP_IFE:
+                return OpIFE(dst, src)
+            elif opcode == OP_IFN:
+                return OpIFN(dst, src)
+            elif opcode == OP_IFG:
+                return OpIFG(dst, src)
+            # IFA
+            # IFL
+            # IFU
+            
+            # ADX
+            # SBX
+            
+            # STI
+            # STD
+            
             
         else:
             val = self.get_op_value(raw_a, False)
-            if raw_b == 1:
+            if raw_b == OP_JSR:
                 return OpJSR(val)
 
         raise ValueError('unknown operation %r, %r, %r' % (opcode, raw_b, raw_a))
