@@ -58,6 +58,7 @@ class Assembler(object):
             VIDEO='0x8000',
             KEYBOARD='0x9000',
         )
+        self.current_nonlocal_label = None
     
     def _get_args(self, line):
         args = []
@@ -177,12 +178,17 @@ class Assembler(object):
                 reg = new_reg
                 continue
                 
-            if not re.match(r'^\w+$', chunk):
+            if not re.match(r'^\.?\w+$', chunk):
                 raise ValueError('cannot identify chunk %r in value %r' % (chunk, this_value))
             if label:
                 raise ValueError('cannot have two labels in value %r' % this_value)
-                
-            label = chunk
+            
+            if chunk.startswith('.'):
+                if not self.current_nonlocal_label:
+                    raise ValueError('cannot have local label %r without nonlocal label, in value %r' % (chunk, this_value))
+                label = self.current_nonlocal_label + '.' + chunk
+            else:
+                label = chunk
         
         offset = offset % 0x10000
         
@@ -211,9 +217,16 @@ class Assembler(object):
         # Strip comments.
         line = re.sub(r';.*', '', line).strip()
     
-        m = re.match(r':(\w+)', line)
+        m = re.match(r':(\.?\w+)', line)
         if m:
-            self.operations.append(Label(m.group(1)))
+            label = m.group(1)
+            if label.startswith('.'):
+                if not self.current_nonlocal_label:
+                    raise SyntaxError('cannot have local label %r without nonlocal label, in line %r' % (label, line))
+                label = self.current_nonlocal_label + label
+            else:
+                self.current_nonlocal_label = label
+            self.operations.append(Label(label))
             line = line[m.end(0):].strip()
     
         if not line:

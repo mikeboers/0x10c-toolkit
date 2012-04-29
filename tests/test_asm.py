@@ -102,6 +102,28 @@ class TestASM(TestCase):
             set [A + 0xffff], 0x1234
         '''))
         
+    def test_local_labels(self):
+        self.assertEqualHex(self.assemble('''
+            :global_a
+            dat 1
+            :.inner
+            dat 2, .inner, 3
+            :global_b
+            dat 4
+            :.inner
+            dat 5, .inner, 6
+            dat global_a, global_b
+        '''), self.assemble('''
+            :global_a
+            dat 1
+            :inner_a
+            dat 2, inner_a, 3
+            :global_b
+            dat 4
+            :inner_b
+            dat 5, inner_b, 6
+            dat global_a, global_b
+        '''))
         
         
     

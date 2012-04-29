@@ -29,7 +29,7 @@ OTHER
 -----
 
 
-- local labels
+√ local labels
     - labels starting with '.' are local
     - they prefix themselves with the last non-local label
 
