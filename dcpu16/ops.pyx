@@ -18,8 +18,8 @@ cdef class Basic(Base):
         self.dst = dst
         self.src = src
     
-    def __repr__(self):
-        return '%s %r, %r' % (self.__class__.__name__, self.dst, self.src)
+    def asm(self):
+        return '%s %s, %s' % (self.__class__.__name__, self.dst.asm(), self.src.asm())
     
     def hex(self):
         opcode = basic_cls_to_hex[self.__class__]
@@ -34,7 +34,7 @@ cdef class NonBasic(Base):
     def __init__(self, values.Base val, other=None):
         self.val = val
         
-    def __repr__(self):
+    def asm(self):
         return '%s %r' % (self.__class__.__name__, self.val)
     
     def hex(self):
@@ -72,7 +72,16 @@ cdef class MUL(Basic):
         cdef unsigned int out = dst * src
         self.dst.set(cpu, out & 0xffff)
         cpu.registers[REG_EX] = (out >> 16) & 0xffff
-    
+
+
+cdef class MLI(Basic):
+    cdef run(self, CPU cpu):
+        cdef signed short dst = self.dst.get(cpu)
+        cdef signed short src = self.src.get(cpu)
+        cdef signed int out = dst * src
+        self.dst.set(cpu, out & 0xffff)
+        cpu.registers[REG_EX] = (out >> 16) & 0xffff
+
     
 cdef class DIV(Basic):
     cdef run(self, CPU cpu):
@@ -171,6 +180,7 @@ basic_code_to_cls = {
     OP_ADD: ADD,
     OP_SUB: SUB,
     OP_MUL: MUL,
+    OP_MLI: MLI,
     OP_DIV: DIV,
     OP_MOD: MOD,
     OP_SHL: SHL,

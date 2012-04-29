@@ -90,3 +90,12 @@ class TestMUL(TestCase):
         self.assertEqual(cpu[X + 1], 0xB404)
         
     
+class TestMLI(TestCase):
+    
+    def test_basic(self):
+        cpu = self.assemble_and_run('''
+            set A, 3
+            mli A, -4
+        ''')
+        self.assertEqual(cpu['A'], -12 % 0x10000)
+        self.assertEqual(cpu['EX'], -1 % 0x10000) # XXX: IS THIS RIGHT?

@@ -16,6 +16,7 @@ cdef object OpSUB = ops.SUB
 cdef object OpMUL = ops.MUL
 cdef object OpDIV = ops.DIV
 cdef object OpMOD = ops.MOD
+cdef object OpMLI = ops.MLI
 cdef object OpSHL = ops.SHL
 cdef object OpSHR = ops.SHR
 cdef object OpAND = ops.AND
@@ -154,7 +155,8 @@ cdef class CPU(object):
                 return OpSUB(dst, src)
             elif opcode == OP_MUL:
                 return OpMUL(dst, src)
-            # MLI
+            elif opcode == OP_MLI:
+                return OpMLI(dst, src)
             elif opcode == OP_DIV:
                 return OpDIV(dst, src)
             # DVI
